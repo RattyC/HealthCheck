@@ -22,3 +22,6 @@ All notable changes to this project will be documented in this file.
 ## 0.2.3 - 2025-09-24
 - Next.js 15: Fix sync dynamic APIs by awaiting `params` in `/packages/[id]/page.tsx`.
 - Config: Move `experimental.outputFileTracingRoot` → top-level `outputFileTracingRoot` in `next.config.ts` to silence warning.
+
+## 0.2.4 - 2025-09-24
+- Seed: Add multiple hospitals (CMH, Sriphat, Chiangmai Ram) and diverse packages (basic/premium/executive/pre-op/cardiac/senior) with various statuses (APPROVED/DRAFT/ARCHIVED), includes, and price histories.
