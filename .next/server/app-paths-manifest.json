@@ -1,0 +1,5 @@
+{
+  "/packages/page": "app/packages/page.js",
+  "/packages/[id]/page": "app/packages/[id]/page.js",
+  "/page": "app/page.js"
+}

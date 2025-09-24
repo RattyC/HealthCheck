@@ -1,0 +1,112 @@
+// Prisma schema for HealthCheck CM Price
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum PackageStatus {
+  DRAFT
+  APPROVED
+  ARCHIVED
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  role      Role      @default(USER)
+  bookmarks Bookmark[]
+}
+
+model Hospital {
+  id        String          @id @default(cuid())
+  name      String
+  shortName String?
+  district  String?
+  phone     String?
+  website   String?
+  logoUrl   String?
+  packages  HealthPackage[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model HealthPackage {
+  id          String         @id @default(cuid())
+  hospital    Hospital       @relation(fields: [hospitalId], references: [id])
+  hospitalId  String
+  title       String
+  slug        String         @unique
+  description String?
+  basePrice   Int
+  priceNote   String?
+  gender      String?
+  minAge      Int?
+  maxAge      Int?
+  category    String[]
+  includes    PackageItem[]
+  status      PackageStatus  @default(DRAFT)
+  sourceUrl   String?
+  validFrom   DateTime?
+  validTo     DateTime?
+  lastChecked DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  histories   PriceHistory[]
+  approvals   ApprovalLog[]
+  tags        String[]
+  bookmarks   Bookmark[]
+
+  @@index([hospitalId])
+  @@index([basePrice])
+  @@index([updatedAt])
+}
+
+model PackageItem {
+  id         String        @id @default(cuid())
+  package    HealthPackage @relation(fields: [packageId], references: [id])
+  packageId  String
+  name       String
+  groupName  String?
+  isOptional Boolean       @default(false)
+}
+
+model PriceHistory {
+  id         String        @id @default(cuid())
+  package    HealthPackage @relation(fields: [packageId], references: [id])
+  packageId  String
+  price      Int
+  recordedAt DateTime      @default(now())
+  notes      String?
+}
+
+model ApprovalLog {
+  id        String        @id @default(cuid())
+  package   HealthPackage @relation(fields: [packageId], references: [id])
+  packageId String
+  action    String
+  actorId   String?
+  reason    String?
+  createdAt DateTime       @default(now())
+}
+
+model Bookmark {
+  id        String        @id @default(cuid())
+  user      User          @relation(fields: [userId], references: [id])
+  userId    String
+  package   HealthPackage @relation(fields: [packageId], references: [id])
+  packageId String
+  createdAt DateTime      @default(now())
+
+  @@unique([userId, packageId])
+}
