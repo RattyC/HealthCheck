@@ -1,7 +1,7 @@
 {
   "name": "healthcheck-cm-price",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.3",
   "type": "module",
   "scripts": {
     "dev": "next dev",
@@ -10,12 +10,15 @@
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "ts-node --esm prisma/seed.ts",
-    "prisma:seed:node": "node --loader ts-node/esm prisma/seed.ts",
+    "prisma:seed": "prisma db seed",
+    "prisma:seed:node": "node prisma/seed.mjs",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down -v",
     "db:logs": "docker compose logs -f db",
     "db:status": "docker compose ps"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",

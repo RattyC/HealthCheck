@@ -13,8 +13,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="border-b">
           <div className="container-page flex h-14 items-center justify-between">
             <a href="/" className="font-semibold">HealthCheck CM Price</a>
-            <nav className="text-sm text-gray-600">
+            <nav className="flex items-center gap-4 text-sm text-gray-600">
               <a href="/packages" className="hover:text-gray-900">แพ็กเกจ</a>
+              <a href="/admin" className="hover:text-gray-900">แอดมิน</a>
             </nav>
           </div>
         </header>
@@ -28,4 +29,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-

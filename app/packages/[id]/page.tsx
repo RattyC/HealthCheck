@@ -2,8 +2,8 @@ import { prisma } from "@/lib/prisma";
 
 export const revalidate = 300;
 
-export default async function PackageDetail({ params }: { params: { id: string } }) {
-  const id = params.id;
+export default async function PackageDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   if (id.startsWith("demo-")) {
     return (
       <article className="space-y-6">
