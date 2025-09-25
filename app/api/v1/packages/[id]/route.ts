@@ -50,6 +50,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json(pkg);
   } catch (error) {
+    console.error("Failed to fetch package detail", error);
     return NextResponse.json({ error: "Unavailable" }, { status: 503 });
   }
 }

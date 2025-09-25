@@ -73,6 +73,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json({ ok: true, item: updated });
   } catch (error) {
+    console.error("Failed to update package status", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

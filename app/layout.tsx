@@ -66,12 +66,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </Link>
                 <div className="flex items-center gap-3">
                   <nav className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-300">
+                    <Link href="/dashboard" className="hover:text-slate-900 dark:hover:text-white">
+                      แดชบอร์ด
+                    </Link>
                     <Link href="/packages" className="hover:text-slate-900 dark:hover:text-white">
                       แพ็กเกจ
                     </Link>
-                    <Link href="/admin" className="hover:text-slate-900 dark:hover:text-white">
-                      แอดมิน
-                    </Link>
+                    {session?.user?.role === "ADMIN" || session?.user?.role === "EDITOR" ? (
+                      <Link href="/admin" className="hover:text-slate-900 dark:hover:text-white">
+                        แอดมิน
+                      </Link>
+                    ) : null}
                   </nav>
                   <div className="flex items-center gap-2">
                     <ThemeToggle />

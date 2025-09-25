@@ -156,6 +156,7 @@ export default async function PackagesPage({
       _count: { includes: pkg._count?.includes ?? 0 },
     } satisfies PackageWithMeta));
   } catch (error) {
+    console.error("Failed to load packages", error);
     hospitals = [];
     total = 0;
     items = [];

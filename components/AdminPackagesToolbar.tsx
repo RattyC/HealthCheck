@@ -43,10 +43,26 @@ export default function AdminPackagesToolbar({ total, defaults }: { total: numbe
 
   const nextQuery = useMemo(() => {
     const sp = new URLSearchParams(params.toString());
-    q ? sp.set("q", q) : sp.delete("q");
-    status && status !== "all" ? sp.set("status", status) : sp.delete("status");
-    sort ? sp.set("sort", sort) : sp.delete("sort");
-    limit ? sp.set("limit", limit) : sp.delete("limit");
+    if (q) {
+      sp.set("q", q);
+    } else {
+      sp.delete("q");
+    }
+    if (status && status !== "all") {
+      sp.set("status", status);
+    } else {
+      sp.delete("status");
+    }
+    if (sort) {
+      sp.set("sort", sort);
+    } else {
+      sp.delete("sort");
+    }
+    if (limit) {
+      sp.set("limit", limit);
+    } else {
+      sp.delete("limit");
+    }
     sp.delete("page");
     return sp.toString();
   }, [params, q, status, sort, limit]);

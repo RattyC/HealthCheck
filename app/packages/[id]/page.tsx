@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 
 export const revalidate = 300;
 
+type PackageDetail = Awaited<ReturnType<typeof prisma.healthPackage.findFirst>>;
+
 export default async function PackageDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (id.startsWith("demo-")) {
@@ -28,7 +30,7 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
       </article>
     );
   }
-  let pkg: any = null;
+  let pkg: PackageDetail | null = null;
   try {
     pkg = await prisma.healthPackage.findFirst({
       where: { OR: [{ id }, { slug: id }] },
@@ -38,7 +40,8 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
         histories: { orderBy: { recordedAt: "desc" }, take: 12 },
       },
     });
-  } catch (e) {
+  } catch (error) {
+    console.error("Failed to load package detail", error);
     pkg = null;
   }
   if (!pkg) return <div className="text-gray-600">ไม่พบแพ็กเกจหรือฐานข้อมูลยังไม่พร้อม</div>;
@@ -61,8 +64,8 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
       <section>
         <h2 className="mb-2 text-lg font-semibold">รายการตรวจ ({pkg.includes.length})</h2>
         <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
-          {pkg.includes.map((it: any) => (
-            <li key={it.id} className="rounded border px-3 py-2 text-sm">{it.name}</li>
+          {pkg.includes.map((item) => (
+            <li key={item.id} className="rounded border px-3 py-2 text-sm">{item.name}</li>
           ))}
         </ul>
       </section>
@@ -71,8 +74,8 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
         <section>
           <h2 className="mb-2 text-lg font-semibold">ประวัติราคา</h2>
           <ul className="text-sm text-gray-600">
-            {pkg.histories.map((h: any) => (
-              <li key={h.id}>฿{h.price.toLocaleString()} • {new Date(h.recordedAt).toLocaleDateString()}</li>
+            {pkg.histories.map((history) => (
+              <li key={history.id}>฿{history.price.toLocaleString()} • {new Date(history.recordedAt).toLocaleDateString()}</li>
             ))}
           </ul>
         </section>

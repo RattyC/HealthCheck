@@ -8,7 +8,8 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
     return NextResponse.json(hospitals);
-  } catch (e) {
+  } catch (error) {
+    console.error("Failed to load hospitals", error);
     return NextResponse.json([]);
   }
 }

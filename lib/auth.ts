@@ -1,5 +1,6 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import type { NextAuthConfig } from "next-auth";
+import type { NextAuthConfig, User as NextAuthUser } from "next-auth";
+import type { AdapterUser } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { z } from "zod";
@@ -53,12 +54,13 @@ export const authConfig = {
             entityType: "user",
           },
         });
-        return {
+        const authUser: NextAuthUser = {
           id: user.id,
-          email: user.email,
-          name: user.name,
+          email: user.email ?? undefined,
+          name: user.name ?? undefined,
           role: user.role,
-        } as any;
+        };
+        return authUser;
       },
     }),
   ],
@@ -66,14 +68,21 @@ export const authConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role ?? "USER";
+        const role = extractRole(user);
+        if (role) {
+          token.role = role;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token?.id) {
         session.user.id = token.id as string;
-        session.user.role = (token.role as string) ?? "USER";
+        if (typeof token.role === "string") {
+          session.user.role = token.role;
+        } else {
+          session.user.role = "USER";
+        }
       }
       return session;
     },
@@ -89,4 +98,12 @@ export const authConfig = {
   trustHost: true,
 } satisfies NextAuthConfig;
 
-export const protectedRoutes = ["/admin", "/compare", "/bookmarks"];
+export const protectedRoutes = ["/admin", "/compare", "/bookmarks", "/dashboard"];
+
+function extractRole(user: AdapterUser | NextAuthUser): string | undefined {
+  if (user && typeof user === "object" && "role" in user) {
+    const role = (user as { role?: unknown }).role;
+    return typeof role === "string" ? role : undefined;
+  }
+  return undefined;
+}
