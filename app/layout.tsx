@@ -2,8 +2,10 @@ import "./globals.css";
 import type { Metadata } from "next";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import { ToastProvider } from "@/components/ToastProvider";
+import AppProviders from "@/components/AppProviders";
+import { getSession } from "@/lib/session";
+import UserMenu from "@/components/UserMenu";
+import CompareBar from "@/components/CompareBar";
 
 const title = "HealthCheck CM Price";
 const description = "เทียบราคาแพ็กเกจตรวจสุขภาพเชียงใหม่ เปรียบเทียบได้ในไม่กี่คลิก";
@@ -51,12 +53,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await getSession();
   return (
     <html lang="th" suppressHydrationWarning>
       <body className="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-150 dark:bg-slate-950 dark:text-slate-100">
-        <ThemeProvider>
-          <ToastProvider>
+        <AppProviders session={session}>
             <header className="border-b border-slate-200 bg-white/60 backdrop-blur dark:border-slate-800 dark:bg-slate-950/60">
               <div className="container-page flex h-14 items-center justify-between gap-4">
                 <Link href="/" className="font-semibold tracking-tight hover:text-brand">
@@ -71,7 +73,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       แอดมิน
                     </Link>
                   </nav>
-                  <ThemeToggle />
+                  <div className="flex items-center gap-2">
+                    <ThemeToggle />
+                    <UserMenu session={session} />
+                  </div>
                 </div>
               </div>
             </header>
@@ -81,8 +86,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <footer className="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
               © {new Date().getFullYear()} HealthCheck CM Price · Chiang Mai, Thailand
             </footer>
-          </ToastProvider>
-        </ThemeProvider>
+            <CompareBar />
+        </AppProviders>
       </body>
     </html>
   );

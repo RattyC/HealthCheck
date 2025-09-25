@@ -10,8 +10,9 @@ type Pkg = {
 };
 
 import Link from "next/link";
+import CompareToggleButton from "@/components/CompareToggleButton";
 
-export default function PackageCard({ pkg }: { pkg: Pkg }) {
+export default function PackageCard({ pkg, bestValue }: { pkg: Pkg; bestValue?: boolean }) {
   const count = pkg._count?.includes ?? 0;
   return (
     <Link
@@ -28,9 +29,14 @@ export default function PackageCard({ pkg }: { pkg: Pkg }) {
         <div className="ml-auto text-right">
           <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">฿{pkg.basePrice.toLocaleString()}</div>
           <div className="text-xs text-slate-500 dark:text-slate-400">{count} รายการตรวจ</div>
+          {bestValue && (
+            <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-300">
+              Best Value
+            </div>
+          )}
         </div>
       </div>
-      <div className="mt-2 flex flex-wrap gap-1 text-xs text-slate-600 dark:text-slate-300">
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
         {pkg.category?.slice(0, 3).map((c) => (
           <span key={c} className="rounded-full border border-slate-200 px-2 py-0.5 dark:border-slate-700">
             {c}
@@ -41,6 +47,17 @@ export default function PackageCard({ pkg }: { pkg: Pkg }) {
             {pkg.gender}
           </span>
         )}
+        <span className="ml-auto">
+          <CompareToggleButton
+            item={{
+              id: pkg.id,
+              title: pkg.title,
+              slug: pkg.slug,
+              basePrice: pkg.basePrice,
+              hospitalName: pkg.hospital.name,
+            }}
+          />
+        </span>
       </div>
     </Link>
   );

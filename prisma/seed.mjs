@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -60,13 +61,35 @@ async function upsertPackage(hospitalId, data) {
 }
 
 async function main() {
+  const adminPassword = await bcrypt.hash('admin1234', 10);
+  const editorPassword = await bcrypt.hash('editor1234', 10);
+  const userPassword = await bcrypt.hash('user1234', 10);
+
+  const [admin, editor, demoUser] = await Promise.all([
+    prisma.user.upsert({
+      where: { email: 'admin@healthcheck.local' },
+      update: { name: 'Admin', role: 'ADMIN', passwordHash: adminPassword },
+      create: { email: 'admin@healthcheck.local', name: 'Admin', role: 'ADMIN', passwordHash: adminPassword },
+    }),
+    prisma.user.upsert({
+      where: { email: 'editor@healthcheck.local' },
+      update: { name: 'Editor', role: 'EDITOR', passwordHash: editorPassword },
+      create: { email: 'editor@healthcheck.local', name: 'Editor', role: 'EDITOR', passwordHash: editorPassword },
+    }),
+    prisma.user.upsert({
+      where: { email: 'user@healthcheck.local' },
+      update: { name: 'Demo User', role: 'USER', passwordHash: userPassword },
+      create: { email: 'user@healthcheck.local', name: 'Demo User', role: 'USER', passwordHash: userPassword },
+    }),
+  ]);
+
   // Hospitals
   const cmh = await upsertHospital('Chiangmai Hospital', 'CMH', 'https://example.com/cmh');
   const sriphat = await upsertHospital('Sriphat Medical Center', 'SRIPHAT', 'https://www.sriphat.com');
   const ram = await upsertHospital('Chiangmai Ram Hospital', 'CM Ram', 'https://www.chiangmairam.com');
 
   // CMH packages
-  await upsertPackage(cmh.id, {
+  const pkgCmhMale = await upsertPackage(cmh.id, {
     title: 'Basic Health Check (Male)',
     slug: 'cmh-basic-male',
     basePrice: 1990,
@@ -86,7 +109,7 @@ async function main() {
     ],
   });
 
-  await upsertPackage(cmh.id, {
+  const pkgCmhFemale = await upsertPackage(cmh.id, {
     title: 'Basic Health Check (Female)',
     slug: 'cmh-basic-female',
     basePrice: 2090,
@@ -102,7 +125,7 @@ async function main() {
     ],
   });
 
-  await upsertPackage(cmh.id, {
+  const pkgCmhExecutive = await upsertPackage(cmh.id, {
     title: 'Executive Checkup',
     slug: 'cmh-executive',
     basePrice: 7990,
@@ -122,7 +145,7 @@ async function main() {
   });
 
   // Sriphat packages
-  await upsertPackage(sriphat.id, {
+  const pkgHeart = await upsertPackage(sriphat.id, {
     title: 'Heart Screening',
     slug: 'sriphat-heart',
     basePrice: 3490,
@@ -137,7 +160,7 @@ async function main() {
     ],
   });
 
-  await upsertPackage(sriphat.id, {
+  const pkgPreop = await upsertPackage(sriphat.id, {
     title: 'Pre-op Check (General)',
     slug: 'sriphat-preop',
     basePrice: 2590,
@@ -155,7 +178,7 @@ async function main() {
   });
 
   // RAM packages
-  await upsertPackage(ram.id, {
+  const pkgRamPremium = await upsertPackage(ram.id, {
     title: 'Premium Health Check',
     slug: 'ram-premium',
     basePrice: 5990,
@@ -173,7 +196,7 @@ async function main() {
     ],
   });
 
-  await upsertPackage(ram.id, {
+  const pkgRamSenior = await upsertPackage(ram.id, {
     title: 'Senior Checkup (60+)',
     slug: 'ram-senior',
     basePrice: 4290,
@@ -188,6 +211,59 @@ async function main() {
       { name: 'Urinalysis', groupName: 'urine' },
       { name: 'Bone density (DXA)', groupName: 'bone' },
     ],
+  });
+  const packages = [pkgCmhMale, pkgCmhFemale, pkgCmhExecutive, pkgHeart, pkgPreop, pkgRamPremium, pkgRamSenior].filter(Boolean);
+
+  for (const pkg of packages) {
+    await prisma.packageMetric.upsert({
+      where: { packageId: pkg.id },
+      update: {},
+      create: { packageId: pkg.id, viewCount: Math.floor(Math.random() * 100) + 10, compareCount: Math.floor(Math.random() * 40), bookmarkCount: Math.floor(Math.random() * 25) },
+    });
+  }
+
+  await prisma.savedSearch.createMany({
+    data: [
+      {
+        userId: demoUser.id,
+        name: 'Cardio Under 4000',
+        params: { q: 'หัวใจ', maxPrice: 4000, category: 'cardiac' },
+      },
+      {
+        userId: demoUser.id,
+        name: 'Female Basic',
+        params: { gender: 'female', category: 'basic' },
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+  await prisma.compareSnapshot.createMany({
+    data: [
+      {
+        slug: 'demo-bundle',
+        packageIds: [pkgCmhMale.id, pkgHeart.id],
+        userId: demoUser.id,
+      },
+      {
+        slug: 'executive-vs-premium',
+        packageIds: [pkgCmhExecutive.id, pkgRamPremium.id],
+        userId: admin.id,
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+  await prisma.searchLog.createMany({
+    data: [
+      { userId: demoUser.id, filters: { q: 'basic', maxPrice: 3000 }, results: 3 },
+      { userId: demoUser.id, filters: { hospitalId: cmh.id }, results: 4 },
+      { userId: admin.id, filters: { status: 'DRAFT' }, results: 1 },
+    ],
+  });
+
+  await prisma.systemLog.create({
+    data: { level: 'INFO', message: 'Seed completed', context: { packages: packages.length } },
   });
 }
 
