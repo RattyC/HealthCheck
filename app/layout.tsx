@@ -7,16 +7,25 @@ import { ToastProvider } from "@/components/ToastProvider";
 
 const title = "HealthCheck CM Price";
 const description = "เทียบราคาแพ็กเกจตรวจสุขภาพเชียงใหม่ เปรียบเทียบได้ในไม่กี่คลิก";
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+const envBaseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+const metadataBase = (() => {
+  if (!envBaseUrl) return undefined;
+  try {
+    return new URL(envBaseUrl);
+  } catch {
+    return undefined;
+  }
+})();
+const canonicalUrl = metadataBase?.toString().replace(/\/$/, "") || "http://localhost:3000";
 
 export const metadata: Metadata = {
   title,
   description,
-  metadataBase: new URL(baseUrl),
+  ...(metadataBase ? { metadataBase } : {}),
   openGraph: {
     title,
     description,
-    url: baseUrl,
+    url: canonicalUrl,
     siteName: title,
     images: [
       {
