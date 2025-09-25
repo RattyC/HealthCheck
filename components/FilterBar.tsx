@@ -29,17 +29,17 @@ export default function FilterBar({ hospitals }: { hospitals: Option[] }) {
   }, [q, hospitalId, sort, params]);
 
   return (
-    <div className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center">
+    <div className="flex flex-col gap-3 rounded-md border border-slate-200 bg-white p-3 shadow-sm shadow-slate-900/5 sm:flex-row sm:items-center dark:border-slate-700 dark:bg-slate-900 dark:shadow-none">
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="ค้นหาชื่อแพ็กเกจ/รายการตรวจ"
-        className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand sm:max-w-sm"
+        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand sm:max-w-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
       />
       <select
         value={hospitalId}
         onChange={(e) => setHospitalId(e.target.value)}
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
       >
         <option value="">ทุกโรงพยาบาล</option>
         {hospitals.map((h) => (
@@ -49,7 +49,7 @@ export default function FilterBar({ hospitals }: { hospitals: Option[] }) {
       <select
         value={sort}
         onChange={(e) => setSort(e.target.value)}
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
       >
         <option value="priceAsc">ราคาต่ำ → สูง</option>
         <option value="priceDesc">ราคาสูง → ต่ำ</option>
@@ -58,13 +58,13 @@ export default function FilterBar({ hospitals }: { hospitals: Option[] }) {
       <div className="ml-auto flex gap-2">
         <button
           onClick={() => router.push(`${pathname}?${queryString}`)}
-          className="rounded-md bg-brand px-4 py-2 text-sm text-white hover:bg-brand-dark"
+          className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1 dark:focus:ring-offset-slate-950"
         >
           ใช้ฟิลเตอร์
         </button>
         <button
           onClick={() => router.push(pathname)}
-          className="rounded-md border px-4 py-2 text-sm"
+          className="rounded-md border border-slate-200 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
         >
           ล้างค่า
         </button>
@@ -72,4 +72,3 @@ export default function FilterBar({ hospitals }: { hospitals: Option[] }) {
     </div>
   );
 }
-

@@ -87,7 +87,7 @@ export default async function PackagesPage({ searchParams }: { searchParams: Pro
 
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">แพ็กเกจทั้งหมด</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">แพ็กเกจทั้งหมด</h1>
       <FilterBar hospitals={hospitalOptions} />
       {items.length === 0 ? (
         <>
