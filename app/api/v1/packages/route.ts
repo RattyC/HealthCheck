@@ -5,6 +5,7 @@ import type { Prisma } from "@prisma/client";
 import { authConfig } from "@/lib/auth";
 import { packageSearchSchema } from "@/lib/validators";
 import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const SEARCH_LIMIT = Number(process.env.RATE_LIMIT_SEARCH ?? 120);
 
@@ -110,9 +111,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ page, limit, total, items });
   } catch (error) {
-    await prisma.systemLog.create({
-      data: { level: "ERROR", message: "search.failed", context: { error: `${error}` } },
-    });
+    logger.error("api.packages.search_failed", { error: `${error}` });
     return NextResponse.json({ page: 1, limit, total: 0, items: [] }, { status: 500 });
   }
 }

@@ -6,6 +6,7 @@ import AppProviders from "@/components/AppProviders";
 import { getSession } from "@/lib/session";
 import UserMenu from "@/components/UserMenu";
 import CompareBar from "@/components/CompareBar";
+import CommandMenu from "@/components/CommandMenu";
 
 const title = "HealthCheck CM Price";
 const description = "เทียบราคาแพ็กเกจตรวจสุขภาพเชียงใหม่ เปรียบเทียบได้ในไม่กี่คลิก";
@@ -92,6 +93,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               © {new Date().getFullYear()} HealthCheck CM Price · Chiang Mai, Thailand
             </footer>
             <CompareBar />
+            <CommandMenu />
         </AppProviders>
       </body>
     </html>

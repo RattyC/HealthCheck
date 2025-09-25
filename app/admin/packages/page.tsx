@@ -5,6 +5,9 @@ import AdminPackagesToolbar from "@/components/AdminPackagesToolbar";
 import Pagination from "@/components/Pagination";
 import EmptyState from "@/components/EmptyState";
 import { prisma } from "@/lib/prisma";
+import { adminPackageQuerySchema } from "@/lib/validators";
+import { requireRole } from "@/lib/auth-guard";
+import { logger } from "@/lib/logger";
 
 export const revalidate = 30;
 
@@ -24,13 +27,17 @@ export default async function AdminPackages({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requireRole(["ADMIN", "EDITOR"], "/dashboard");
   const sp = await searchParams;
-  const q = typeof sp.q === "string" ? sp.q : "";
-  const statusParam = typeof sp.status === "string" ? sp.status : "all";
-  const sortParam = typeof sp.sort === "string" ? sp.sort : "updatedDesc";
-  const page = Math.max(1, Number(sp.page ?? 1));
-  const requestedLimit = Number(sp.limit ?? 20);
-  const limit = ACCEPTED_LIMIT.includes(requestedLimit) ? requestedLimit : 20;
+  const parsed = adminPackageQuerySchema.safeParse(sp);
+  const input = parsed.success
+    ? parsed.data
+    : { q: "", status: "all", sort: "updatedDesc", page: 1, limit: 20 };
+  const limit = ACCEPTED_LIMIT.includes(input.limit) ? input.limit : 20;
+  const page = input.page;
+  const q = input.q ?? "";
+  const statusParam = input.status ?? "all";
+  const sortParam = input.sort ?? "updatedDesc";
   const skip = (page - 1) * limit;
 
   const tokens = q
@@ -72,7 +79,8 @@ export default async function AdminPackages({
         take: limit,
       }),
     ]);
-  } catch {
+  } catch (error) {
+    logger.error("admin.packages.query_failed", { error: `${error}` });
     total = 0;
     items = [];
   }
@@ -102,7 +110,7 @@ export default async function AdminPackages({
               {items.map((pkg) => (
                 <tr
                   key={pkg.id}
-                  className="border-t border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/60"
+                  className="border-t border-slate-100 transition hover:-translate-y-[1px] hover:bg-slate-50 hover:shadow-sm dark:border-slate-800 dark:hover:bg-slate-800/60"
                 >
                   <td className="p-2">
                     <div className="font-medium text-slate-900 dark:text-white">{pkg.title}</div>

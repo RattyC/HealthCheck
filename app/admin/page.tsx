@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/auth-guard";
 
 export const revalidate = 60;
 
 export default async function AdminHome() {
+  await requireRole(["ADMIN", "EDITOR"], "/dashboard");
   let counts = { DRAFT: 0, APPROVED: 0, ARCHIVED: 0 } as Record<string, number>;
   try {
     const [draft, approved, archived] = await Promise.all([

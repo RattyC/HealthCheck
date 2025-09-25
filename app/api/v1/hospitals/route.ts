@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -9,7 +10,7 @@ export async function GET() {
     });
     return NextResponse.json(hospitals);
   } catch (error) {
-    console.error("Failed to load hospitals", error);
+    logger.error("api.hospitals.failed", { error: `${error}` });
     return NextResponse.json([]);
   }
 }

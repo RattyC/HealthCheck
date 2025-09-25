@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const paramSchema = z.object({ id: z.string().min(1) });
 const VIEW_LIMIT = Number(process.env.RATE_LIMIT_PACKAGE ?? 240);
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json(pkg);
   } catch (error) {
-    console.error("Failed to fetch package detail", error);
+    logger.error("api.package.detail_failed", { error: `${error}` });
     return NextResponse.json({ error: "Unavailable" }, { status: 503 });
   }
 }

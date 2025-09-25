@@ -1,4 +1,9 @@
+import dynamic from "next/dynamic";
+import { format, differenceInDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
+
+const PriceHistoryChart = dynamic(() => import("@/components/PriceHistoryChart"), { ssr: false });
 
 export const revalidate = 300;
 
@@ -41,10 +46,20 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
       },
     });
   } catch (error) {
-    console.error("Failed to load package detail", error);
+    logger.error("packages.detail.failed", { error: `${error}`, id });
     pkg = null;
   }
   if (!pkg) return <div className="text-gray-600">ไม่พบแพ็กเกจหรือฐานข้อมูลยังไม่พร้อม</div>;
+
+  const historyPoints = (pkg.histories ?? [])
+    .slice()
+    .sort((a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime());
+  const latest = historyPoints[historyPoints.length - 1];
+  const first = historyPoints[0];
+  const priceChange = latest && first ? latest.price - first.price : 0;
+  const priceChangeLabel = priceChange === 0 ? "ไม่มีการเปลี่ยนแปลง" : priceChange > 0 ? `เพิ่มขึ้น ฿${priceChange.toLocaleString()}` : `ลดลง ฿${Math.abs(priceChange).toLocaleString()}`;
+  const lastUpdated = pkg.updatedAt ? format(pkg.updatedAt, "d MMM yyyy") : "-";
+  const isNew = pkg.updatedAt ? differenceInDays(new Date(), pkg.updatedAt) <= 14 : false;
 
   return (
     <article className="space-y-6">
@@ -52,6 +67,12 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
         <div>
           <h1 className="text-2xl font-bold">{pkg.title}</h1>
           <div className="text-sm text-gray-600">{pkg.hospital?.name}</div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            {isNew && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-semibold text-emerald-600">อัปเดตใหม่</span>}
+            {pkg.gender && pkg.gender !== "any" && (
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500">{pkg.gender}</span>
+            )}
+          </div>
         </div>
         <div className="text-right">
           <div className="text-2xl font-semibold">฿{pkg.basePrice.toLocaleString()}</div>
@@ -60,6 +81,43 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
       </header>
 
       {pkg.description && <p className="text-gray-700">{pkg.description}</p>}
+
+      <section className="grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 md:grid-cols-3">
+        <div className="space-y-1">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">ราคาเฉลี่ย</div>
+          <div className="text-xl font-semibold text-slate-900 dark:text-white">
+            ฿{Math.round(historyPoints.reduce((acc, item) => acc + item.price, 0) / Math.max(historyPoints.length, 1)).toLocaleString()}
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">จากประวัติ {historyPoints.length} ครั้ง</div>
+        </div>
+        <div className="space-y-1">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">ความเปลี่ยนแปลงล่าสุด</div>
+          <div className={`text-xl font-semibold ${priceChange > 0 ? "text-rose-500" : priceChange < 0 ? "text-emerald-500" : "text-slate-900 dark:text-white"}`}>
+            {priceChangeLabel}
+          </div>
+          {latest && <div className="text-xs text-slate-500 dark:text-slate-400">ล่าสุดเมื่อ {format(new Date(latest.recordedAt), "d MMM yyyy")}</div>}
+        </div>
+        <div className="space-y-1">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">ข้อมูลล่าสุด</div>
+          <div className="text-xl font-semibold text-slate-900 dark:text-white">{lastUpdated}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">{pkg.includes.length} รายการตรวจ</div>
+        </div>
+      </section>
+
+      {historyPoints.length > 1 && (
+        <section className="space-y-3 rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/70">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">แนวโน้มราคา</h2>
+            <span className="text-xs text-slate-500">ข้อมูลย้อนหลัง {historyPoints.length} ครั้ง</span>
+          </div>
+          <PriceHistoryChart
+            data={historyPoints.map((point) => ({
+              price: point.price,
+              recordedAt: new Date(point.recordedAt).toISOString(),
+            }))}
+          />
+        </section>
+      )}
 
       <section>
         <h2 className="mb-2 text-lg font-semibold">รายการตรวจ ({pkg.includes.length})</h2>

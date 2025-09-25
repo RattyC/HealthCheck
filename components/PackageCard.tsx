@@ -12,7 +12,13 @@ type Pkg = {
 import Link from "next/link";
 import CompareToggleButton from "@/components/CompareToggleButton";
 
-export default function PackageCard({ pkg, bestValue }: { pkg: Pkg; bestValue?: boolean }) {
+type PackageCardProps = {
+  pkg: Pkg;
+  bestValue?: boolean;
+  badges?: Array<{ label: string; tone?: "success" | "info" | "warning" }>;
+};
+
+export default function PackageCard({ pkg, bestValue, badges = [] }: PackageCardProps) {
   const count = pkg._count?.includes ?? 0;
   return (
     <Link
@@ -29,11 +35,27 @@ export default function PackageCard({ pkg, bestValue }: { pkg: Pkg; bestValue?: 
         <div className="ml-auto text-right">
           <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">฿{pkg.basePrice.toLocaleString()}</div>
           <div className="text-xs text-slate-500 dark:text-slate-400">{count} รายการตรวจ</div>
-          {bestValue && (
-            <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-300">
-              Best Value
-            </div>
-          )}
+          <div className="mt-1 flex flex-wrap justify-end gap-1">
+            {bestValue && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-300">
+                Best Value
+              </span>
+            )}
+            {badges.map(({ label, tone }) => (
+              <span
+                key={label}
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                  tone === "success"
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"
+                    : tone === "warning"
+                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-300"
+                    : "bg-slate-200/70 text-slate-600 dark:bg-slate-800/70 dark:text-slate-300"
+                }`}
+              >
+                {label}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300">

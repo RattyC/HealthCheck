@@ -5,6 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth";
 import { adminStatusUpdateSchema } from "@/lib/validators";
+import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 
 const paramSchema = z.object({ id: z.string().min(1) });
 
@@ -15,6 +17,10 @@ const statusMap: Record<string, "APPROVED" | "DRAFT" | "ARCHIVED"> = {
 };
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const limiter = rateLimit(`admin-status:${req.ip ?? "unknown"}`, 60);
+  if (!limiter.success) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
   const session = await getServerSession(authConfig);
   if (!session || (session.user.role !== "ADMIN" && session.user.role !== "EDITOR")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -68,12 +74,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       revalidatePath("/admin/packages");
       revalidateTag(`package:${id}`);
     } catch (err) {
-      console.error("Failed to revalidate", err);
-    }
+    logger.warn("revalidate.failed", { error: `${err}` });
+  }
 
     return NextResponse.json({ ok: true, item: updated });
   } catch (error) {
-    console.error("Failed to update package status", error);
+    logger.error("admin.package.status_failed", { error: `${error}` });
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

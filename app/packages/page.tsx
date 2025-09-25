@@ -5,6 +5,9 @@ import EmptyState from "@/components/EmptyState";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { packageSearchSchema, type PackageSearchInput } from "@/lib/validators";
+import { Search } from "lucide-react";
+import { differenceInDays } from "date-fns";
+import { logger } from "@/lib/logger";
 
 export const revalidate = 60;
 
@@ -15,6 +18,8 @@ type PackageWithMeta = {
   basePrice: number;
   gender: string | null;
   category: string[];
+  priceNote: string | null;
+  updatedAt: Date;
   hospital: { id: string; name: string; logoUrl: string | null };
   _count: { includes: number };
 };
@@ -88,6 +93,18 @@ function getBestValueId(list: PackageWithMeta[]): string | null {
   return bestId;
 }
 
+function buildBadges(pkg: PackageWithMeta) {
+  const badges: Array<{ label: string; tone?: "success" | "info" | "warning" }> = [];
+  const daysFromUpdate = differenceInDays(new Date(), pkg.updatedAt);
+  if (daysFromUpdate <= 14) {
+    badges.push({ label: "อัปเดตใหม่", tone: "success" });
+  }
+  if (pkg.priceNote && pkg.priceNote.toLowerCase().includes("ลด")) {
+    badges.push({ label: "ลดราคา", tone: "warning" });
+  }
+  return badges;
+}
+
 export default async function PackagesPage({
   searchParams,
 }: {
@@ -152,11 +169,13 @@ export default async function PackagesPage({
       basePrice: pkg.basePrice,
       gender: pkg.gender,
       category: pkg.category,
+      priceNote: pkg.priceNote ?? null,
+      updatedAt: pkg.updatedAt,
       hospital: pkg.hospital,
       _count: { includes: pkg._count?.includes ?? 0 },
     } satisfies PackageWithMeta));
   } catch (error) {
-    console.error("Failed to load packages", error);
+    logger.error("packages.page.query_failed", { error: `${error}` });
     hospitals = [];
     total = 0;
     items = [];
@@ -172,6 +191,8 @@ export default async function PackagesPage({
       basePrice: 1990,
       gender: "male",
       category: ["basic"],
+      priceNote: null,
+      updatedAt: new Date(),
       hospital: { id: "h1", name: "Demo Hospital", logoUrl: null },
       _count: { includes: 8 },
     },
@@ -182,6 +203,8 @@ export default async function PackagesPage({
       basePrice: 2090,
       gender: "female",
       category: ["basic"],
+      priceNote: null,
+      updatedAt: new Date(),
       hospital: { id: "h1", name: "Demo Hospital", logoUrl: null },
       _count: { includes: 8 },
     },
@@ -192,6 +215,8 @@ export default async function PackagesPage({
       basePrice: 4990,
       gender: "any",
       category: ["premium"],
+      priceNote: null,
+      updatedAt: new Date(),
       hospital: { id: "h1", name: "Demo Hospital", logoUrl: null },
       _count: { includes: 15 },
     },
@@ -206,6 +231,7 @@ export default async function PackagesPage({
           <EmptyState
             title="ไม่พบผลลัพธ์"
             hint="ลองปรับช่วงราคา เลือกโรงพยาบาลอื่น หรือเคลียร์ตัวกรองเพื่อดูตัวเลือกมากขึ้น"
+            icon={<Search size={20} />}
           />
           {showMock && (
             <div className="space-y-2">
@@ -221,7 +247,7 @@ export default async function PackagesPage({
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {items.map((pkg) => (
-            <PackageCard key={pkg.id} pkg={pkg} bestValue={pkg.id === bestValueId} />
+            <PackageCard key={pkg.id} pkg={pkg} bestValue={pkg.id === bestValueId} badges={buildBadges(pkg)} />
           ))}
         </div>
       )}
