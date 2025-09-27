@@ -32,6 +32,10 @@ type ViewWithPackage = Prisma.PackageViewGetPayload<{
   include: { package: { select: typeof healthPackageSelect } };
 }>;
 
+type NotificationSubscriptionWithPackage = Prisma.NotificationSubscriptionGetPayload<{
+  include: { package: { select: typeof healthPackageSelect } };
+}>;
+
 type ProfileSummary = {
   id: string;
   name: string | null;
@@ -134,7 +138,7 @@ export default async function DashboardPage() {
   let trends: MetricWithPackage[] = [];
   let recentViews: ViewWithPackage[] = [];
   let notifications = [] as Awaited<ReturnType<typeof prisma.notification.findMany>>;
-  let notificationSubscriptions = [] as Awaited<ReturnType<typeof prisma.notificationSubscription.findMany>>;
+  let notificationSubscriptions: NotificationSubscriptionWithPackage[] = [];
   let loadError: Error | null = null;
 
   try {
@@ -220,18 +224,12 @@ export default async function DashboardPage() {
         prisma.notificationSubscription.findMany({
           where: { userId },
           include: {
-            package: {
-              select: {
-                id: true,
-                title: true,
-                hospital: { select: { name: true } },
-              },
-            },
+            package: { select: healthPackageSelect },
           },
           orderBy: { createdAt: "desc" },
           take: 6,
-        }),
-        [],
+        }) as Promise<NotificationSubscriptionWithPackage[]>,
+        [] as NotificationSubscriptionWithPackage[],
         "dashboard.notification-subscriptions"
       ),
       withTimeout(
