@@ -4,6 +4,7 @@
   "version": "0.2.4",
   "type": "module",
   "scripts": {
+    "prebuild": "npm run prisma:generate",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
