@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { authConfig } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { adminStatusUpdateSchema } from "@/lib/validators";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
@@ -17,12 +16,21 @@ const statusMap: Record<string, "APPROVED" | "DRAFT" | "ARCHIVED"> = {
 };
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const limiter = rateLimit(`admin-status:${req.ip ?? "unknown"}`, 60);
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const limiter = rateLimit(`admin-status:${ip}`, 60);
   if (!limiter.success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
-  const session = await getServerSession(authConfig);
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "EDITOR")) {
+  const session = await getSession();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const role = (session.user as { role?: string }).role;
+  const userId = (session.user as { id?: string }).id;
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (role !== "ADMIN" && role !== "EDITOR") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -46,11 +54,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         data: { status: newStatus, updatedAt: new Date() },
       }),
       prisma.approvalLog.create({
-        data: { packageId: id, action, actorId: session.user.id, reason: reason ?? null },
+        data: { packageId: id, action, actorId: userId, reason: reason ?? null },
       }),
       prisma.auditTrail.create({
         data: {
-          actorId: session.user.id,
+          actorId: userId,
           action: action === "approve" ? "APPROVE_PACKAGE" : action === "reject" ? "REJECT_PACKAGE" : "ARCHIVE_PACKAGE",
           entityId: id,
           entityType: "healthPackage",
@@ -62,7 +70,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await prisma.notification.createMany({
       data: [
         {
-          userId: session.user.id,
+          userId,
           type: "GENERAL",
           payload: { action, packageId: id },
         },
@@ -74,8 +82,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       revalidatePath("/admin/packages");
       revalidateTag(`package:${id}`);
     } catch (err) {
-    logger.warn("revalidate.failed", { error: `${err}` });
-  }
+      logger.warn("revalidate.failed", { error: `${err}` });
+    }
 
     return NextResponse.json({ ok: true, item: updated });
   } catch (error) {

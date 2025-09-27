@@ -1,5 +1,6 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import type { NextAuthConfig, User as NextAuthUser } from "next-auth";
+import type { Session } from "next-auth";
+import type { CredentialsConfig, CredentialInput } from "next-auth/providers/credentials";
 import type { AdapterUser } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
@@ -14,11 +15,13 @@ const credentialsSchema = z.object({
   password: z.string().min(6),
 });
 
+type MutableToken = Record<string, unknown> & { id?: unknown; role?: unknown };
+
 export const authConfig = {
   adapter: PrismaAdapter(prisma),
   secret: authSecret,
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
   },
   pages: {
     signIn: "/auth/sign-in",
@@ -31,7 +34,11 @@ export const authConfig = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(rawCredentials) {
+      authorize: (async (
+        rawCredentials: Record<string, string> | undefined,
+        _req: unknown,
+      ) => {
+        void _req;
         const parsed = credentialsSchema.safeParse(rawCredentials);
         if (!parsed.success) {
           throw new Error("กรุณากรอกอีเมลและรหัสผ่านให้ถูกต้อง");
@@ -54,18 +61,17 @@ export const authConfig = {
             entityType: "user",
           },
         });
-        const authUser: NextAuthUser = {
+        return {
           id: user.id,
           email: user.email ?? undefined,
           name: user.name ?? undefined,
           role: user.role,
         };
-        return authUser;
-      },
-    }),
+      }) as unknown as CredentialsConfig<Record<string, CredentialInput>>["authorize"],
+    }) as CredentialsConfig<Record<string, CredentialInput>>,
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: MutableToken; user?: AdapterUser | null }) {
       if (user) {
         token.id = user.id;
         const role = extractRole(user);
@@ -75,7 +81,7 @@ export const authConfig = {
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: MutableToken }) {
       if (session.user && token?.id) {
         session.user.id = token.id as string;
         if (typeof token.role === "string") {
@@ -88,7 +94,7 @@ export const authConfig = {
     },
   },
   events: {
-    async signIn({ user }) {
+    async signIn({ user }: { user?: AdapterUser | null }) {
       if (!user?.id) return;
       await prisma.systemLog.create({
         data: { level: "INFO", message: "user.sign_in", context: { userId: user.id } },
@@ -96,11 +102,11 @@ export const authConfig = {
     },
   },
   trustHost: true,
-} satisfies NextAuthConfig;
+};
 
 export const protectedRoutes = ["/admin", "/compare", "/bookmarks", "/dashboard"];
 
-function extractRole(user: AdapterUser | NextAuthUser): string | undefined {
+function extractRole(user: AdapterUser | { role?: unknown }): string | undefined {
   if (user && typeof user === "object" && "role" in user) {
     const role = (user as { role?: unknown }).role;
     return typeof role === "string" ? role : undefined;

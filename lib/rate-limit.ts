@@ -1,9 +1,9 @@
-import LRU from "lru-cache";
+import { LRUCache } from "lru-cache";
 
 const windowMs = 60_000;
 const max = Number(process.env.RATE_LIMIT_MAX ?? 60);
 
-const tokenCache = new LRU<string, { tokens: number; last: number }>({
+const tokenCache = new LRUCache<string, { tokens: number; last: number }>({
   max: 5000,
 });
 

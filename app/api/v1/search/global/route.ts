@@ -10,7 +10,8 @@ const querySchema = z.object({
 const SEARCH_LIMIT = 5;
 
 export async function GET(req: NextRequest) {
-  const limiter = rateLimit(`cmdk:${req.ip ?? "unknown"}`, 120);
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const limiter = rateLimit(`cmdk:${ip}`, 120);
   if (!limiter.success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { authConfig } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 
@@ -10,7 +9,8 @@ const paramSchema = z.object({ id: z.string().min(1) });
 const VIEW_LIMIT = Number(process.env.RATE_LIMIT_PACKAGE ?? 240);
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const limiter = rateLimit(`package:${req.headers.get("x-forwarded-for") ?? req.ip ?? "unknown"}`, VIEW_LIMIT);
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const limiter = rateLimit(`package:${ip}`, VIEW_LIMIT);
   if (!limiter.success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
@@ -32,7 +32,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     if (!pkg) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const session = await getServerSession(authConfig);
+    const session = await getSession();
+    const userId = (session?.user as { id?: string })?.id;
     await prisma.$transaction([
       prisma.packageMetric.upsert({
         where: { packageId: pkg.id },
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       prisma.packageView.create({
         data: {
           packageId: pkg.id,
-          userId: session?.user?.id,
+          userId,
           type: "VIEW",
           source: "package-detail",
         },

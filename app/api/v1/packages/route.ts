@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
-import { authConfig } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { packageSearchSchema } from "@/lib/validators";
 import { rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
@@ -26,7 +25,7 @@ function parseSearchParams(searchParams: URLSearchParams) {
 }
 
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.ip ?? "unknown";
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const limiter = rateLimit(`search:${ip}`, SEARCH_LIMIT);
   if (!limiter.success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": Math.ceil((limiter.reset - Date.now()) / 1000).toString() } });
@@ -100,10 +99,11 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    const session = await getServerSession(authConfig);
+    const session = await getSession();
+    const userId = (session?.user as { id?: string })?.id;
     await prisma.searchLog.create({
       data: {
-        userId: session?.user?.id,
+        userId,
         filters: parsed.data,
         results: total,
       },

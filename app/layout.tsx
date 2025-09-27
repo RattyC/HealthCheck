@@ -10,21 +10,21 @@ import CommandMenu from "@/components/CommandMenu";
 
 const title = "HealthCheck CM Price";
 const description = "เทียบราคาแพ็กเกจตรวจสุขภาพเชียงใหม่ เปรียบเทียบได้ในไม่กี่คลิก";
-const envBaseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+const FALLBACK_BASE_URL = "http://localhost:3000";
+const rawBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || FALLBACK_BASE_URL;
 const metadataBase = (() => {
-  if (!envBaseUrl) return undefined;
   try {
-    return new URL(envBaseUrl);
+    return new URL(rawBaseUrl);
   } catch {
-    return undefined;
+    return new URL(FALLBACK_BASE_URL);
   }
 })();
-const canonicalUrl = metadataBase?.toString().replace(/\/$/, "") || "http://localhost:3000";
+const canonicalUrl = metadataBase.toString().replace(/\/$/, "");
 
 export const metadata: Metadata = {
   title,
   description,
-  ...(metadataBase ? { metadataBase } : {}),
+  metadataBase,
   openGraph: {
     title,
     description,
@@ -56,6 +56,8 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
+  const userRole = (session?.user as { role?: string })?.role;
+  const isAdmin = userRole === "ADMIN" || userRole === "EDITOR";
   return (
     <html lang="th" suppressHydrationWarning>
       <body className="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-150 dark:bg-slate-950 dark:text-slate-100">
@@ -73,7 +75,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     <Link href="/packages" className="hover:text-slate-900 dark:hover:text-white">
                       แพ็กเกจ
                     </Link>
-                    {session?.user?.role === "ADMIN" || session?.user?.role === "EDITOR" ? (
+                    {isAdmin ? (
                       <Link href="/admin" className="hover:text-slate-900 dark:hover:text-white">
                         แอดมิน
                       </Link>

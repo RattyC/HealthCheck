@@ -1,16 +1,16 @@
-import dynamic from "next/dynamic";
 import { format, differenceInDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
-
-const PriceHistoryChart = dynamic(() => import("@/components/PriceHistoryChart"), { ssr: false });
+import { getSession } from "@/lib/session";
+import BookmarkButton from "@/components/BookmarkButton";
+import PriceHistoryChart from "@/components/PriceHistoryChart";
 
 export const revalidate = 300;
 
-type PackageDetail = Awaited<ReturnType<typeof prisma.healthPackage.findFirst>>;
-
 export default async function PackageDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const session = await getSession();
+  const userId = (session?.user as { id?: string })?.id;
   if (id.startsWith("demo-")) {
     return (
       <article className="space-y-6">
@@ -35,20 +35,22 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
       </article>
     );
   }
-  let pkg: PackageDetail | null = null;
-  try {
-    pkg = await prisma.healthPackage.findFirst({
+  const pkg = await prisma.healthPackage
+    .findFirst({
       where: { OR: [{ id }, { slug: id }] },
       include: {
         hospital: true,
         includes: true,
         histories: { orderBy: { recordedAt: "desc" }, take: 12 },
+        bookmarks: userId
+          ? { where: { userId }, select: { id: true } }
+          : false,
       },
+    })
+    .catch((error) => {
+      logger.error("packages.detail.failed", { error: `${error}`, id });
+      return null;
     });
-  } catch (error) {
-    logger.error("packages.detail.failed", { error: `${error}`, id });
-    pkg = null;
-  }
   if (!pkg) return <div className="text-gray-600">ไม่พบแพ็กเกจหรือฐานข้อมูลยังไม่พร้อม</div>;
 
   const historyPoints = (pkg.histories ?? [])
@@ -77,6 +79,9 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
         <div className="text-right">
           <div className="text-2xl font-semibold">฿{pkg.basePrice.toLocaleString()}</div>
           {pkg.priceNote && <div className="text-xs text-gray-500">{pkg.priceNote}</div>}
+          <div className="mt-3 flex justify-end">
+            <BookmarkButton packageId={pkg.id} initialBookmarked={Boolean(pkg.bookmarks?.length)} />
+          </div>
         </div>
       </header>
 

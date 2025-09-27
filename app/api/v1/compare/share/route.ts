@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { generateToken } from "@/lib/tokens";
 import { rateLimit } from "@/lib/rate-limit";
-import { authConfig } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { logger } from "@/lib/logger";
 
 const schema = z.object({ ids: z.array(z.string().cuid()).min(2).max(4) });
@@ -21,13 +20,14 @@ export async function POST(request: Request) {
   }
   const { ids } = parsed.data;
   const slug = generateToken(6);
-  const session = await getServerSession(authConfig);
+  const session = await getSession();
+  const userId = (session?.user as { id?: string })?.id;
   try {
     await prisma.compareSnapshot.create({
       data: {
         slug,
         packageIds: ids,
-        userId: session?.user?.id,
+        userId,
       },
     });
   } catch (error) {

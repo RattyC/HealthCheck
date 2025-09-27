@@ -2,6 +2,7 @@ import FilterBar from "@/components/FilterBar";
 import PackageCard from "@/components/PackageCard";
 import Pagination from "@/components/Pagination";
 import EmptyState from "@/components/EmptyState";
+import SaveSearchButton from "@/components/SaveSearchButton";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { packageSearchSchema, type PackageSearchInput } from "@/lib/validators";
@@ -105,6 +106,21 @@ function buildBadges(pkg: PackageWithMeta) {
   return badges;
 }
 
+function buildSerializableParams(input: PackageSearchInput) {
+  const entries: Record<string, string | number> = {};
+  if (input.q) entries.q = input.q;
+  if (input.hospitalId) entries.hospitalId = input.hospitalId;
+  if (input.minPrice !== undefined) entries.minPrice = input.minPrice;
+  if (input.maxPrice !== undefined) entries.maxPrice = input.maxPrice;
+  if (input.gender) entries.gender = input.gender;
+  if (input.age !== undefined) entries.age = input.age;
+  if (input.category) entries.category = input.category;
+  entries.sort = input.sort;
+  entries.page = input.page;
+  entries.limit = input.limit;
+  return entries;
+}
+
 export default async function PackagesPage({
   searchParams,
 }: {
@@ -183,6 +199,7 @@ export default async function PackagesPage({
 
   const bestValueId = getBestValueId(items);
   const showMock = items.length === 0 && hospitals.length === 0;
+  const serializedParams = buildSerializableParams(input);
   const mockItems: PackageWithMeta[] = [
     {
       id: "demo-1",
@@ -225,7 +242,10 @@ export default async function PackagesPage({
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">แพ็กเกจทั้งหมด</h1>
-      <FilterBar hospitals={hospitals} />
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <FilterBar hospitals={hospitals} />
+        <SaveSearchButton params={serializedParams} />
+      </div>
       {items.length === 0 ? (
         <>
           <EmptyState

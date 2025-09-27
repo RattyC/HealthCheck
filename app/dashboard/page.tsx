@@ -4,6 +4,10 @@ import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
+import EmptyState from "@/components/EmptyState";
+import SavedSearchList from "@/components/SavedSearchList";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -11,71 +15,99 @@ function formatRelative(date: Date) {
   return formatDistanceToNow(date, { addSuffix: true, locale: th });
 }
 
+const healthPackageSelect = {
+  id: true,
+  title: true,
+  slug: true,
+  basePrice: true,
+  hospital: { select: { name: true } },
+} satisfies Prisma.HealthPackageSelect;
+
+type BookmarkWithPackage = Prisma.BookmarkGetPayload<{
+  include: { package: { select: typeof healthPackageSelect } };
+}>;
+
+type MetricWithPackage = Prisma.PackageMetricGetPayload<{
+  include: { package: { select: typeof healthPackageSelect } };
+}>;
+
 export default async function DashboardPage() {
   const session = await getSession();
-  if (!session?.user?.id) {
+  const userId = (session?.user as { id?: string })?.id;
+  if (!userId) {
     redirect("/auth/sign-in?callbackUrl=/dashboard");
   }
 
-  const userId = session.user.id;
+  let summary = {
+    bookmarkCount: 0,
+    savedSearchCount: 0,
+    compareCount: 0,
+    notificationsCount: 0,
+  };
+  let recentBookmarks: BookmarkWithPackage[] = [];
+  let savedSearches = [] as Awaited<ReturnType<typeof prisma.savedSearch.findMany>>;
+  let recentSearches = [] as Awaited<ReturnType<typeof prisma.searchLog.findMany>>;
+  let compareSnapshots = [] as Awaited<ReturnType<typeof prisma.compareSnapshot.findMany>>;
+  let trendingPackages: MetricWithPackage[] = [];
+  let loadError: Error | null = null;
 
-  const [summary, recentBookmarks, savedSearches, recentSearches, compareSnapshots, trendingPackages] = await Promise.all([
-    (async () => {
-      const [bookmarkCount, savedSearchCount, compareCount, notificationsCount] = await Promise.all([
-        prisma.bookmark.count({ where: { userId } }),
-        prisma.savedSearch.count({ where: { userId } }),
-        prisma.compareSnapshot.count({ where: { userId } }),
-        prisma.notification.count({ where: { userId, readAt: null } }),
-      ]);
-      return { bookmarkCount, savedSearchCount, compareCount, notificationsCount };
-    })(),
-    prisma.bookmark.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      include: {
-        package: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            basePrice: true,
-            hospital: { select: { name: true } },
+  try {
+    const [summaryResult, bookmarksResult, savedSearchResult, recentSearchResult, compareResult, trendingResult] = await Promise.all([
+      (async () => {
+        const [bookmarkCount, savedSearchCount, compareCount, notificationsCount] = await Promise.all([
+          prisma.bookmark.count({ where: { userId } }),
+          prisma.savedSearch.count({ where: { userId } }),
+          prisma.compareSnapshot.count({ where: { userId } }),
+          prisma.notification.count({ where: { userId, readAt: null } }),
+        ]);
+        return { bookmarkCount, savedSearchCount, compareCount, notificationsCount };
+      })(),
+      prisma.bookmark.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        include: {
+          package: {
+            select: healthPackageSelect,
           },
         },
-      },
-      take: 6,
-    }),
-    prisma.savedSearch.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-    prisma.searchLog.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-    }),
-    prisma.compareSnapshot.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-    prisma.packageMetric.findMany({
-      orderBy: { viewCount: "desc" },
-      include: {
-        package: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            basePrice: true,
-            hospital: { select: { name: true } },
+        take: 6,
+      }),
+      prisma.savedSearch.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
+      prisma.searchLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+      }),
+      prisma.compareSnapshot.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
+      prisma.packageMetric.findMany({
+        orderBy: { viewCount: "desc" },
+        include: {
+          package: {
+            select: healthPackageSelect,
           },
         },
-      },
-      take: 5,
-    }),
-  ]);
+        take: 5,
+      }),
+    ]);
+
+    summary = summaryResult;
+    recentBookmarks = bookmarksResult;
+    savedSearches = savedSearchResult;
+    recentSearches = recentSearchResult;
+    compareSnapshots = compareResult;
+    trendingPackages = trendingResult;
+  } catch (error) {
+    loadError = error instanceof Error ? error : new Error(String(error));
+    logger.error("dashboard.page.query_failed", { error: `${error}` });
+  }
 
   const tiles = [
     {
@@ -125,6 +157,11 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {loadError ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/30 dark:text-amber-100 lg:col-span-2">
+            ไม่สามารถเชื่อมต่อฐานข้อมูลได้ ข้อมูลบนแดชบอร์ดนี้จะแสดงเป็นค่าว่างจนกว่าจะเชื่อมต่อสำเร็จ
+          </div>
+        ) : null}
         <div className="space-y-3 rounded-xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">รายการที่บันทึกล่าสุด</h2>
@@ -161,21 +198,9 @@ export default async function DashboardPage() {
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Saved searches</h2>
           </div>
           {savedSearches.length === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-300">ยังไม่มีการบันทึกการค้นหา</p>
+            <EmptyState title="ยังไม่มีการบันทึกการค้นหา" hint="เลือกตัวกรองแล้วกดปุ่มบันทึกบนหน้าค้นหาเพื่อเข้าถึงที่นี่ได้ทันที" />
           ) : (
-            <ul className="space-y-2">
-              {savedSearches.map((search) => (
-                <li key={search.id} className="rounded-lg border border-slate-100 px-3 py-2 text-sm dark:border-slate-800">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-slate-900 dark:text-white">{search.name}</span>
-                    <span className="text-[11px] text-slate-400">{formatRelative(search.createdAt)}</span>
-                  </div>
-                  <pre className="mt-1 overflow-x-auto rounded bg-slate-50 px-2 py-1 text-[11px] text-slate-600 dark:bg-slate-950 dark:text-slate-300">
-                    {JSON.stringify(search.params, null, 0)}
-                  </pre>
-                </li>
-              ))}
-            </ul>
+            <SavedSearchList items={savedSearches} />
           )}
         </div>
       </div>

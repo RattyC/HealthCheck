@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import { PackageStatus, type Prisma } from "@prisma/client";
 import AdminStatusBadge from "@/components/AdminStatusBadge";
 import AdminActions from "@/components/AdminActions";
 import AdminPackagesToolbar from "@/components/AdminPackagesToolbar";
@@ -56,7 +56,7 @@ export default async function AdminPackages({
   }
 
   const where: Prisma.HealthPackageWhereInput = {
-    ...(ACCEPTED_STATUS.has(statusParam) ? { status: statusParam as Prisma.PackageStatus } : {}),
+    ...(ACCEPTED_STATUS.has(statusParam) ? { status: statusParam as PackageStatus } : {}),
     ...(q ? { OR: searchConditions } : {}),
   };
 
