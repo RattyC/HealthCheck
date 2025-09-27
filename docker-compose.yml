@@ -1,20 +1,149 @@
+version: "3.9"
+
+x-healthchecks:
+  postgres: &postgres_health
+    test: ["CMD-SHELL", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+    interval: 5s
+    timeout: 3s
+    retries: 20
+    start_period: 10s
+
 services:
   db:
-    image: postgres:16-alpine
-    container_name: healthcheck_cm_db
+    image: postgres:16
+    container_name: hc_db
+    restart: unless-stopped
+    env_file:
+      - .env.db
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hc_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hc_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-hc_prod}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck: *postgres_health
+    profiles: ["prod"]
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hc_web
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "
+        npx prisma migrate deploy &&
+        npx prisma generate &&
+        npm run start
+      "
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    profiles: ["prod"]
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: hc_caddy
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: healthcheck
+      YOUR_DOMAIN: ${YOUR_DOMAIN}
+      YOUR_EMAIL: ${YOUR_EMAIL}
     ports:
-      - "5432:5432"
+      - "80:80"
+      - "443:443"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      web:
+        condition: service_started
+    profiles: ["prod"]
+
+  pg_backup:
+    image: prodrigestivill/postgres-backup-local:16
+    container_name: hc_db_backup
+    restart: unless-stopped
+    env_file:
+      - .env.db
+      - .env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: ${POSTGRES_DB:-hc_prod}
+      POSTGRES_USER: ${POSTGRES_USER:-hc_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hc_pass}
+      SCHEDULE: ${BACKUP_SCHEDULE:-@daily}
+      BACKUP_DIR: /backups
+      COMPRESSION: "gzip"
+    volumes:
+      - db_backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["prod"]
+
+  db_dev:
+    image: postgres:16
+    container_name: hc_db_dev
+    restart: unless-stopped
+    env_file:
+      - .env.dev
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hc_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hc_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-hc_dev}
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data_dev:/var/lib/postgresql/data
+    healthcheck: *postgres_health
+    profiles: ["dev"]
+
+  web_dev:
+    image: node:20-bullseye
+    container_name: hc_web_dev
+    restart: unless-stopped
+    working_dir: /app
+    env_file:
+      - .env.dev
+    environment:
+      NODE_ENV: development
+    depends_on:
+      db_dev:
+        condition: service_healthy
+    command: >
+      sh -c "
+        if [ ! -f node_modules/.bin/prisma ]; then npm install; fi &&
+        npx prisma migrate deploy &&
+        npx prisma generate &&
+        npm run dev
+      "
+    volumes:
+      - ./:/app
+      - node_modules_dev:/app/node_modules
+      - next_cache_dev:/app/.next
+    ports:
+      - "3000:3000"
+    profiles: ["dev"]
+
 volumes:
-  pgdata:
+  db_data:
+  db_data_dev:
+  db_backups:
+  caddy_data:
+  caddy_config:
+  node_modules_dev:
+  next_cache_dev:

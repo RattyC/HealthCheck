@@ -1,0 +1,11 @@
+{$YOUR_DOMAIN} {
+  encode zstd gzip
+  reverse_proxy web:3000
+  tls {$YOUR_EMAIL}
+  @health {
+    path /healthz
+  }
+  handle @health {
+    respond "ok"
+  }
+}

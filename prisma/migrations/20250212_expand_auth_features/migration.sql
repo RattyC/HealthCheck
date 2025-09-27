@@ -1,17 +1,50 @@
--- CreateEnum
-CREATE TYPE "ViewEventType" AS ENUM ('VIEW', 'COMPARE', 'BOOKMARK');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'Role') THEN
+    CREATE TYPE "Role" AS ENUM ('ADMIN', 'USER');
+  END IF;
+END
+$$;
 
--- CreateEnum
-CREATE TYPE "NotificationType" AS ENUM ('PRICE_DROP', 'PACKAGE_APPROVED', 'GENERAL');
+DO $$
+BEGIN
+  ALTER TYPE "Role" ADD VALUE IF NOT EXISTS 'EDITOR';
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END
+$$;
 
--- CreateEnum
-CREATE TYPE "AuditAction" AS ENUM ('LOGIN', 'CREATE_PACKAGE', 'UPDATE_PACKAGE', 'APPROVE_PACKAGE', 'REJECT_PACKAGE', 'ARCHIVE_PACKAGE', 'UPDATE_PRICE', 'EXPORT_DATA', 'RESET_PASSWORD');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ViewEventType') THEN
+    CREATE TYPE "ViewEventType" AS ENUM ('VIEW', 'COMPARE', 'BOOKMARK');
+  END IF;
+END
+$$;
 
--- CreateEnum
-CREATE TYPE "LogLevel" AS ENUM ('INFO', 'WARN', 'ERROR');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'NotificationType') THEN
+    CREATE TYPE "NotificationType" AS ENUM ('PRICE_DROP', 'PACKAGE_APPROVED', 'GENERAL');
+  END IF;
+END
+$$;
 
--- AlterEnum
-ALTER TYPE "Role" ADD VALUE 'EDITOR';
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'AuditAction') THEN
+    CREATE TYPE "AuditAction" AS ENUM ('LOGIN', 'CREATE_PACKAGE', 'UPDATE_PACKAGE', 'APPROVE_PACKAGE', 'REJECT_PACKAGE', 'ARCHIVE_PACKAGE', 'UPDATE_PRICE', 'EXPORT_DATA', 'RESET_PASSWORD');
+  END IF;
+END
+$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'LogLevel') THEN
+    CREATE TYPE "LogLevel" AS ENUM ('INFO', 'WARN', 'ERROR');
+  END IF;
+END
+$$;
 
 -- AlterTable
 ALTER TABLE "User" ADD COLUMN     "image" TEXT,
@@ -302,4 +335,3 @@ ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId"
 
 -- AddForeignKey
 ALTER TABLE "Authenticator" ADD CONSTRAINT "Authenticator_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
