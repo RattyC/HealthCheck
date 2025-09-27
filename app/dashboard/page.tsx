@@ -50,6 +50,32 @@ const navItems = [
   { id: "settings", label: "ตั้งค่า", icon: "⚙️" },
 ];
 
+const DB_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_DB_TIMEOUT ?? 2500);
+
+function withTimeout<T>(promise: Promise<T>, fallback: T, label: string, timeout = DB_TIMEOUT_MS): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<T>((resolve) => {
+    timer = setTimeout(() => {
+      logger.warn(`${label}.timeout`, { timeout });
+      resolve(fallback);
+    }, timeout);
+  });
+
+  return Promise.race([
+    promise
+      .then((result) => {
+        clearTimeout(timer);
+        return result;
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        logger.error(`${label}.failed`, { error: `${error}` });
+        return fallback;
+      }),
+    timeoutPromise,
+  ]);
+}
+
 function formatRelative(date: Date) {
   return formatDistanceToNow(date, { addSuffix: true, locale: th });
 }
@@ -113,70 +139,110 @@ export default async function DashboardPage() {
 
   try {
     const [profileResult, summaryResult, bookmarksResult, savedSearchResult, recentSearchResult, compareResult, viewsResult, notificationsResult, subscriptionsResult, trendingResult] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, name: true, email: true, role: true, image: true, lastLoginAt: true },
-      }),
-      (async () => {
-        const [bookmarkCount, savedSearchCount, compareCount, notificationsCount] = await Promise.all([
-          prisma.bookmark.count({ where: { userId } }),
-          prisma.savedSearch.count({ where: { userId } }),
-          prisma.compareSnapshot.count({ where: { userId } }),
-          prisma.notification.count({ where: { userId, readAt: null } }),
-        ]);
-        return { bookmarkCount, savedSearchCount, compareCount, notificationsCount };
-      })(),
-      prisma.bookmark.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-        include: { package: { select: healthPackageSelect } },
-        take: 6,
-      }),
-      prisma.savedSearch.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-        take: 5,
-      }),
-      prisma.searchLog.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-        take: 6,
-      }),
-      prisma.compareSnapshot.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-        take: 5,
-      }),
-      prisma.packageView.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-        include: { package: { select: healthPackageSelect } },
-        take: 6,
-      }),
-      prisma.notification.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-        take: 8,
-      }),
-      prisma.notificationSubscription.findMany({
-        where: { userId },
-        include: {
-          package: {
-            select: {
-              id: true,
-              title: true,
-              hospital: { select: { name: true } },
+      withTimeout(
+        prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true, name: true, email: true, role: true, image: true, lastLoginAt: true },
+        }),
+        null,
+        "dashboard.profile"
+      ),
+      withTimeout(
+        (async () => {
+          const [bookmarkCount, savedSearchCount, compareCount, notificationsCount] = await Promise.all([
+            prisma.bookmark.count({ where: { userId } }),
+            prisma.savedSearch.count({ where: { userId } }),
+            prisma.compareSnapshot.count({ where: { userId } }),
+            prisma.notification.count({ where: { userId, readAt: null } }),
+          ]);
+          return { bookmarkCount, savedSearchCount, compareCount, notificationsCount };
+        })(),
+        summary,
+        "dashboard.summary"
+      ),
+      withTimeout(
+        prisma.bookmark.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          include: { package: { select: healthPackageSelect } },
+          take: 6,
+        }),
+        [],
+        "dashboard.bookmarks"
+      ),
+      withTimeout(
+        prisma.savedSearch.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        }),
+        [],
+        "dashboard.saved-searches"
+      ),
+      withTimeout(
+        prisma.searchLog.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          take: 6,
+        }),
+        [],
+        "dashboard.search-logs"
+      ),
+      withTimeout(
+        prisma.compareSnapshot.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        }),
+        [],
+        "dashboard.compare-snapshots"
+      ),
+      withTimeout(
+        prisma.packageView.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          include: { package: { select: healthPackageSelect } },
+          take: 6,
+        }),
+        [],
+        "dashboard.recent-views"
+      ),
+      withTimeout(
+        prisma.notification.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          take: 8,
+        }),
+        [],
+        "dashboard.notifications"
+      ),
+      withTimeout(
+        prisma.notificationSubscription.findMany({
+          where: { userId },
+          include: {
+            package: {
+              select: {
+                id: true,
+                title: true,
+                hospital: { select: { name: true } },
+              },
             },
           },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 6,
-      }),
-      prisma.packageMetric.findMany({
-        orderBy: { viewCount: "desc" },
-        include: { package: { select: healthPackageSelect } },
-        take: 5,
-      }),
+          orderBy: { createdAt: "desc" },
+          take: 6,
+        }),
+        [],
+        "dashboard.notification-subscriptions"
+      ),
+      withTimeout(
+        prisma.packageMetric.findMany({
+          orderBy: { viewCount: "desc" },
+          include: { package: { select: healthPackageSelect } },
+          take: 5,
+        }),
+        [],
+        "dashboard.trending"
+      ),
     ]);
 
     profile = profileResult;

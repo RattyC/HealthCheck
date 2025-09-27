@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Search, Sparkles, Shield, Star, HeartPulse } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 import EmptyState from "@/components/EmptyState";
 
 export const revalidate = 300;
@@ -10,6 +11,32 @@ const currency = new Intl.NumberFormat("th-TH", {
   currency: "THB",
   maximumFractionDigits: 0,
 });
+
+const DB_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_DB_TIMEOUT ?? 2500);
+
+function withTimeout<T>(promise: Promise<T>, fallback: T, label: string, timeout = DB_TIMEOUT_MS): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<T>((resolve) => {
+    timer = setTimeout(() => {
+      logger.warn(`${label}.timeout`, { timeout });
+      resolve(fallback);
+    }, timeout);
+  });
+
+  return Promise.race([
+    promise
+      .then((result) => {
+        clearTimeout(timer);
+        return result;
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        logger.error(`${label}.failed`, { error: `${error}` });
+        return fallback;
+      }),
+    timeoutPromise,
+  ]);
+}
 
 const quickFilters = [
   { label: "ราคาต่ำกว่า 3,000", href: "/packages?maxPrice=3000", emoji: "💸" },
@@ -92,8 +119,8 @@ function HeroSearch() {
 
 export default async function HomePage() {
   const [topPackages, hospitals] = await Promise.all([
-    prisma.healthPackage
-      .findMany({
+    withTimeout(
+      prisma.healthPackage.findMany({
         where: { status: "APPROVED" },
         include: {
           hospital: { select: { name: true, logoUrl: true } },
@@ -101,15 +128,19 @@ export default async function HomePage() {
         },
         orderBy: [{ metrics: { viewCount: "desc" } }, { updatedAt: "desc" }],
         take: 6,
-      })
-      .catch(() => []),
-    prisma.hospital
-      .findMany({
+      }),
+      [],
+      "homepage.top-packages"
+    ),
+    withTimeout(
+      prisma.hospital.findMany({
         include: { _count: { select: { packages: true } } },
         orderBy: { packages: { _count: "desc" } },
         take: 6,
-      })
-      .catch(() => []),
+      }),
+      [],
+      "homepage.hospitals"
+    ),
   ]);
 
   const hasPackages = topPackages.length > 0;

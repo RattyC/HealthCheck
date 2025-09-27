@@ -12,6 +12,32 @@ import { logger } from "@/lib/logger";
 
 export const revalidate = 60;
 
+const DB_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_DB_TIMEOUT ?? 2500);
+
+function withTimeout<T>(promise: Promise<T>, fallback: T, label: string, timeout = DB_TIMEOUT_MS): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<T>((resolve) => {
+    timer = setTimeout(() => {
+      logger.warn(`${label}.timeout`, { timeout });
+      resolve(fallback);
+    }, timeout);
+  });
+
+  return Promise.race([
+    promise
+      .then((result) => {
+        clearTimeout(timer);
+        return result;
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        logger.error(`${label}.failed`, { error: `${error}` });
+        return fallback;
+      }),
+    timeoutPromise,
+  ]);
+}
+
 type PackageWithMeta = {
   id: string;
   title: string;
@@ -159,21 +185,33 @@ export default async function PackagesPage({
 
   try {
     const [hospitalRows, packageTotal, packageRows] = await Promise.all([
-      prisma.hospital.findMany({
-        include: { _count: { select: { packages: true } } },
-        orderBy: { name: "asc" },
-      }),
-      prisma.healthPackage.count({ where }),
-      prisma.healthPackage.findMany({
-        where,
-        orderBy: resolveOrderBy(input.sort),
-        include: {
-          hospital: { select: { id: true, name: true, logoUrl: true } },
-          _count: { select: { includes: true } },
-        },
-        skip,
-        take: input.limit,
-      }),
+      withTimeout(
+        prisma.hospital.findMany({
+          include: { _count: { select: { packages: true } } },
+          orderBy: { name: "asc" },
+        }),
+        [],
+        "packages.page.hospitals"
+      ),
+      withTimeout(
+        prisma.healthPackage.count({ where }),
+        0,
+        "packages.page.count"
+      ),
+      withTimeout(
+        prisma.healthPackage.findMany({
+          where,
+          orderBy: resolveOrderBy(input.sort),
+          include: {
+            hospital: { select: { id: true, name: true, logoUrl: true } },
+            _count: { select: { includes: true } },
+          },
+          skip,
+          take: input.limit,
+        }),
+        [],
+        "packages.page.items"
+      ),
     ]);
 
     hospitals = hospitalRows.map((h) => ({ value: h.id, label: `${h.name} (${h._count?.packages ?? 0})` }));
