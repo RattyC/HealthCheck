@@ -1,3 +1,4 @@
+// Compare page renders side-by-side analysis of selected health packages.
 import { notFound } from "next/navigation";
 import CompareClient, { type ComparePackage } from "@/components/CompareClient";
 import { prisma } from "@/lib/prisma";

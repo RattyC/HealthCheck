@@ -1,3 +1,4 @@
+// Admin packages table for reviewing, filtering, and moderating health package records.
 import { PackageStatus, type Prisma } from "@prisma/client";
 import AdminStatusBadge from "@/components/AdminStatusBadge";
 import AdminActions from "@/components/AdminActions";

@@ -1,8 +1,9 @@
+// Sign-in page providing marketing messaging and access to the auth form.
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import AuthSignInForm from "@/components/AuthSignInForm";
 import { getSession } from "@/lib/session";
-import "./sign-in.css";
+import styles from "./SignInLayout.module.css";
 
 export const metadata = {
   title: "เข้าสู่ระบบ | HealthCheck CM Price",
@@ -27,43 +28,43 @@ export default async function SignInPage({
   }
 
   return (
-    <div className="sign-in-shell">
-      <div className="sign-in-grid">
-        <aside className="sign-in-hero">
-          <div className="sign-in-hero__header">
-            <Link href="/" className="sign-in-hero__brand">
+    <div className={styles.signInShell}>
+      <div className={styles.signInGrid}>
+        <aside className={styles.signInHero}>
+          <div className={styles.signInHeroHeader}>
+            <Link href="/" className={styles.signInHeroBrand}>
               HealthCheck CM Price
             </Link>
-            <div className="sign-in-hero__headline">
-              <h1 className="sign-in-hero__title">เข้าสู่ระบบเพื่อจัดการแพ็กเกจสุขภาพของคุณ</h1>
-              <p className="sign-in-hero__description">
+            <div className={styles.signInHeroHeadline}>
+              <h1 className={styles.signInHeroTitle}>เข้าสู่ระบบเพื่อจัดการแพ็กเกจสุขภาพของคุณ</h1>
+              <p className={styles.signInHeroDescription}>
                 จัดการข้อมูลโรงพยาบาล เปรียบเทียบแพ็กเกจ และดูสถิติยอดนิยมแบบเรียลไทม์ บนแพลตฟอร์มเดียวที่ออกแบบมาเพื่อเชียงใหม่โดยเฉพาะ
               </p>
             </div>
-            <ul className="sign-in-hero__list">
+            <ul className={styles.signInHeroList}>
               {checklist.map((item) => (
-                <li key={item} className="sign-in-hero__item">
-                  <span className="sign-in-hero__item-bullet">✓</span>
+                <li key={item} className={styles.signInHeroItem}>
+                  <span className={styles.signInHeroItemBullet}>✓</span>
                   <span>{item}</span>
                 </li>
               ))}
             </ul>
           </div>
-          <div className="sign-in-hero__footer">
+          <div className={styles.signInHeroFooter}>
             <p>Demo สำหรับการทดสอบ: <span className="font-medium">admin@healthcheck.local</span></p>
             <p className="font-mono text-sm">รหัสผ่าน: admin1234</p>
           </div>
         </aside>
 
-        <section className="sign-in-form-panel">
-          <div className="sign-in-form-panel__intro">
-            <h2 className="sign-in-form-panel__title">ยินดีต้อนรับกลับ</h2>
-            <p className="sign-in-form-panel__subtitle">
+        <section className={styles.signInFormPanel}>
+          <div className={styles.signInFormPanelIntro}>
+            <h2 className={styles.signInFormPanelTitle}>ยินดีต้อนรับกลับ</h2>
+            <p className={styles.signInFormPanelSubtitle}>
               เข้าสู่ระบบเพื่อเริ่มจัดการแพ็กเกจ วิเคราะห์ข้อมูล และส่งต่อข้อมูลให้ทีมของคุณ
             </p>
           </div>
           <AuthSignInForm />
-          <div className="sign-in-footnote">
+          <div className={styles.signInFootnote}>
             ยังไม่มีบัญชี? <Link href="/support/contact">ติดต่อเพื่อขอสิทธิ์เข้าถึง</Link>
           </div>
         </section>

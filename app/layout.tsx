@@ -8,6 +8,9 @@ import UserMenu from "@/components/UserMenu";
 import CompareBar from "@/components/CompareBar";
 import CommandMenu from "@/components/CommandMenu";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "default-no-store";
+
 const title = "HealthCheck CM Price";
 const description = "เทียบราคาแพ็กเกจตรวจสุขภาพเชียงใหม่ เปรียบเทียบได้ในไม่กี่คลิก";
 const FALLBACK_BASE_URL = "http://localhost:3000";
@@ -74,6 +77,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     </Link>
                     <Link href="/packages" className="hover:text-slate-900 dark:hover:text-white">
                       แพ็กเกจ
+                    </Link>
+                    <Link href="/cart" className="hover:text-slate-900 dark:hover:text-white">
+                      ตะกร้า
                     </Link>
                     {isAdmin ? (
                       <Link href="/admin" className="hover:text-slate-900 dark:hover:text-white">

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ToastProvider";
+import styles from "./AuthSignInForm.module.css";
 
 export default function AuthSignInForm() {
   const search = useSearchParams();
@@ -50,9 +51,9 @@ export default function AuthSignInForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="sign-in-form">
-      <div className="form-group">
-        <label htmlFor="email" className="form-label">
+    <form onSubmit={handleSubmit} className={styles.signInForm}>
+      <div className={styles.formGroup}>
+        <label htmlFor="email" className={styles.formLabel}>
           อีเมล
         </label>
         <input
@@ -62,48 +63,48 @@ export default function AuthSignInForm() {
           autoComplete="email"
           inputMode="email"
           required
-          className="form-input"
+          className={styles.formInput}
           placeholder="you@example.com"
         />
       </div>
 
-      <div className="form-group">
-        <label htmlFor="password" className="form-label">
+      <div className={styles.formGroup}>
+        <label htmlFor="password" className={styles.formLabel}>
           รหัสผ่าน
         </label>
-        <div className="form-input-wrapper">
+        <div className={styles.formInputWrapper}>
           <input
             id="password"
             name="password"
             type={showPassword ? "text" : "password"}
             autoComplete="current-password"
             required
-            className="form-input"
+            className={styles.formInput}
             placeholder="รหัสผ่าน"
           />
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
-            className="password-toggle"
+            className={styles.passwordToggle}
             aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
           >
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
-        <div className="form-helpers">
-          <label className="checkbox">
+        <div className={styles.formHelpers}>
+          <label className={styles.checkbox}>
             <input type="checkbox" name="remember" />
             จดจำฉันบนอุปกรณ์นี้
           </label>
-          <Link href="/auth/forgot-password" className="btn-link">
+          <Link href="/auth/forgot-password" className={styles.linkButton}>
             ลืมรหัสผ่าน?
           </Link>
         </div>
       </div>
 
-      {error && <p className="form-error">{error}</p>}
+      {error && <p className={styles.formError}>{error}</p>}
 
-      <button type="submit" disabled={loading} className="btn-primary">
+      <button type="submit" disabled={loading} className={styles.primaryButton}>
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />

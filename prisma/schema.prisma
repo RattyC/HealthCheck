@@ -38,6 +38,7 @@ model User {
   auditTrails               AuditTrail[]               @relation("AuditTrailActor")
   searchLogs                SearchLog[]
   compareSnapshots          CompareSnapshot[]
+  cart                      Cart?
   accounts                  Account[]
   sessions                  Session[]
   Authenticator             Authenticator[]
@@ -84,6 +85,7 @@ model HealthPackage {
   views         PackageView[]
   metrics       PackageMetric?
   notifications NotificationSubscription[]
+  cartItems     CartItem[]
 
   @@index([hospitalId])
   @@index([basePrice])
@@ -245,6 +247,28 @@ model SystemLog {
   createdAt DateTime @default(now())
 
   @@index([level, createdAt])
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String     @unique
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id         String        @id @default(cuid())
+  cart       Cart          @relation(fields: [cartId], references: [id])
+  cartId     String
+  package    HealthPackage @relation(fields: [packageId], references: [id])
+  packageId  String
+  quantity   Int           @default(1)
+  addedAt    DateTime      @default(now())
+
+  @@unique([cartId, packageId])
+  @@index([packageId])
 }
 
 enum ViewEventType {

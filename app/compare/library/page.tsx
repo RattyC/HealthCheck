@@ -1,3 +1,4 @@
+// Compare library shows saved comparison snapshots for the current user.
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";

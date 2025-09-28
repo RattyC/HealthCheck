@@ -1,3 +1,4 @@
+// Password reset form consumes the emailed token and lets users set a new credential.
 import ResetPasswordForm from "@/components/ResetPasswordForm";
 
 export const metadata = {

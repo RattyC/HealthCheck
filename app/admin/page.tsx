@@ -1,3 +1,4 @@
+// Admin dashboard landing that shows package approval stats and quick shortcuts.
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-guard";
@@ -39,6 +40,12 @@ export default async function AdminHome() {
           className="inline-flex items-center rounded bg-brand px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1 dark:focus:ring-offset-slate-950"
         >
           จัดการแพ็กเกจ
+        </Link>
+        <Link
+          href="/admin/cart"
+          className="ml-3 inline-flex items-center rounded border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-brand/40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          ดูตะกร้าผู้ใช้
         </Link>
       </div>
     </section>

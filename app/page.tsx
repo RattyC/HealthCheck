@@ -1,3 +1,4 @@
+// Landing page for HealthCheck CM Price showing highlights, quick filters, and top packages.
 import Link from "next/link";
 import { Search, Sparkles, Shield, Star, HeartPulse } from "lucide-react";
 import { prisma } from "@/lib/prisma";

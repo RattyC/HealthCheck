@@ -1,9 +1,11 @@
+// Package detail page rendering pricing insight, history, and cart/bookmark controls.
 import { format, differenceInDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { getSession } from "@/lib/session";
 import BookmarkButton from "@/components/BookmarkButton";
 import PriceHistoryChart from "@/components/PriceHistoryChart";
+import AddToCartButton from "@/components/AddToCartButton";
 
 export const revalidate = 300;
 
@@ -42,8 +44,13 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
         hospital: true,
         includes: true,
         histories: { orderBy: { recordedAt: "desc" }, take: 12 },
-        bookmarks: userId
-          ? { where: { userId }, select: { id: true } }
+        bookmarks: userId ? { where: { userId }, select: { id: true } } : false,
+        cartItems: userId
+          ? {
+              where: { cart: { userId } },
+              select: { id: true },
+              take: 1,
+            }
           : false,
       },
     })
@@ -53,9 +60,9 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
     });
   if (!pkg) return <div className="text-gray-600">ไม่พบแพ็กเกจหรือฐานข้อมูลยังไม่พร้อม</div>;
 
-  const historyPoints = (pkg.histories ?? [])
-    .slice()
-    .sort((a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime());
+  const inCart = Boolean(pkg.cartItems?.length);
+
+  const historyPoints = (pkg.histories ?? []).slice().reverse();
   const latest = historyPoints[historyPoints.length - 1];
   const first = historyPoints[0];
   const priceChange = latest && first ? latest.price - first.price : 0;
@@ -79,8 +86,9 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
         <div className="text-right">
           <div className="text-2xl font-semibold">฿{pkg.basePrice.toLocaleString()}</div>
           {pkg.priceNote && <div className="text-xs text-gray-500">{pkg.priceNote}</div>}
-          <div className="mt-3 flex justify-end">
+          <div className="mt-3 flex flex-wrap justify-end gap-2">
             <BookmarkButton packageId={pkg.id} initialBookmarked={Boolean(pkg.bookmarks?.length)} />
+            <AddToCartButton packageId={pkg.id} initialInCart={inCart} />
           </div>
         </div>
       </header>

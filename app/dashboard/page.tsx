@@ -1,3 +1,4 @@
+// User dashboard aggregates bookmarks, recent activity, and shortcuts after sign-in.
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";

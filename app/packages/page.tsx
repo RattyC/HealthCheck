@@ -1,3 +1,4 @@
+// Packages listing page handles filtering, pagination, and best-value highlighting.
 import FilterBar from "@/components/FilterBar";
 import PackageCard from "@/components/PackageCard";
 import Pagination from "@/components/Pagination";
@@ -50,6 +51,22 @@ type PackageWithMeta = {
   hospital: { id: string; name: string; logoUrl: string | null };
   _count: { includes: number };
 };
+
+const packageSelect = {
+  id: true,
+  title: true,
+  slug: true,
+  basePrice: true,
+  gender: true,
+  category: true,
+  priceNote: true,
+  updatedAt: true,
+  hospital: { select: { id: true, name: true, logoUrl: true } },
+  _count: { select: { includes: true } },
+} satisfies Prisma.HealthPackageSelect;
+
+type PackageRow = Prisma.HealthPackageGetPayload<{ select: typeof packageSelect }>;
+type HospitalRow = Prisma.HospitalGetPayload<{ include: { _count: { select: { packages: true } } } }>;
 
 type HospitalOption = {
   value: string;
@@ -184,35 +201,24 @@ export default async function PackagesPage({
   const where = buildWhereClause(input);
 
   try {
-    const [hospitalRows, packageTotal, packageRows] = await Promise.all([
-      withTimeout(
+    const [hospitalRows, packageTotal, packageRows] = await withTimeout(
+      prisma.$transaction([
         prisma.hospital.findMany({
           include: { _count: { select: { packages: true } } },
           orderBy: { name: "asc" },
         }),
-        [],
-        "packages.page.hospitals"
-      ),
-      withTimeout(
         prisma.healthPackage.count({ where }),
-        0,
-        "packages.page.count"
-      ),
-      withTimeout(
         prisma.healthPackage.findMany({
           where,
           orderBy: resolveOrderBy(input.sort),
-          include: {
-            hospital: { select: { id: true, name: true, logoUrl: true } },
-            _count: { select: { includes: true } },
-          },
+          select: packageSelect,
           skip,
           take: input.limit,
         }),
-        [],
-        "packages.page.items"
-      ),
-    ]);
+      ]),
+      [[], 0, []] as [HospitalRow[], number, PackageRow[]],
+      "packages.page.tx"
+    );
 
     hospitals = hospitalRows.map((h) => ({ value: h.id, label: `${h.name} (${h._count?.packages ?? 0})` }));
     total = packageTotal;

@@ -1,3 +1,4 @@
+// Forgot password flow where users request reset links via email.
 import Link from "next/link";
 import ForgotPasswordForm from "@/components/ForgotPasswordForm";
 
