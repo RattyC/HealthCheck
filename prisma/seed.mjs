@@ -2,6 +2,7 @@ import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+const toDate = (value) => new Date(value);
 
 const hospitals = [
   {
@@ -52,6 +53,18 @@ const packages = [
     priceNote: "รวมค่าแพทย์และค่าบริการแล้ว",
     tags: ["blood", "xray", "urine"],
     hospitalKey: "cmr",
+        description:
+      "โปรแกรมตรวจพื้นฐานสำหรับผู้ชายวัยทำงาน ครอบคลุม CBC, น้ำตาล, ไขมัน และเอ็กซเรย์ปอด พร้อมสรุปผลโดยแพทย์อายุรกรรม",
+    sourceUrl: "https://www.chiangmairam.com/packages/basic-checkup-male",
+    validFrom: toDate("2024-01-01T00:00:00Z"),
+    lastChecked: toDate("2024-10-10T00:00:00Z"),
+    metrics: {
+      viewCount: 182,
+      compareCount: 46,
+      bookmarkCount: 21,
+      lastViewedAt: toDate("2024-10-18T09:12:00Z"),
+      lastComparedAt: toDate("2024-10-16T04:05:00Z"),
+    },
     includes: [
       { name: "CBC", groupName: "Basic Lab" },
       { name: "FBS", groupName: "Basic Lab" },
@@ -73,6 +86,18 @@ const packages = [
     priceNote: "แถมตรวจ Pap Smear",
     tags: ["blood", "ultrasound", "heart", "gyne"],
     hospitalKey: "cmr",
+    description:
+      "โปรแกรมตรวจสุขภาพระดับผู้บริหารสำหรับผู้หญิง เพิ่มเติมการตรวจฮอร์โมน มะเร็งเต้านม และมดลูก พร้อมอัลตร้าซาวด์ช่องท้อง",
+    sourceUrl: "https://www.chiangmairam.com/packages/executive-premium-female",
+    validFrom: toDate("2024-02-01T00:00:00Z"),
+    lastChecked: toDate("2024-10-15T00:00:00Z"),
+    metrics: {
+      viewCount: 146,
+      compareCount: 38,
+      bookmarkCount: 17,
+      lastViewedAt: toDate("2024-10-19T13:35:00Z"),
+      lastComparedAt: toDate("2024-10-14T08:45:00Z"),
+    },
     includes: [
       { name: "CBC", groupName: "Advanced Lab" },
       { name: "Liver Function Test", groupName: "Advanced Lab" },
@@ -84,8 +109,8 @@ const packages = [
       { name: "EKG", groupName: "Heart" },
     ],
     histories: [
-      { price: 6290, recordedAt: new Date("2024-03-01T00:00:00Z") },
-      { price: 5990, recordedAt: new Date("2024-09-01T00:00:00Z"), notes: "ลดราคา" },
+      { price: 6290, recordedAt: toDate("2024-03-01T00:00:00Z") },
+      { price: 5990, recordedAt: toDate("2024-09-01T00:00:00Z"), notes: "ลดราคา" },
     ],
   },
   {
@@ -97,6 +122,18 @@ const packages = [
     priceNote: "รวมตรวจสมรรถภาพหัวใจและสมอง",
     tags: ["blood", "brain", "heart"],
     hospitalKey: "mcc",
+    description:
+      "ออกแบบสำหรับผู้สูงอายุ ตรวจสุขภาพทั่วไป พร้อมตรวจสมอง เบาหวาน ไต และหัวใจ มีเวชศาสตร์ฟื้นฟูให้คำแนะนำ",
+    sourceUrl: "https://www.mccormick.in.th/packages/senior-care-60",
+    validFrom: toDate("2023-12-01T00:00:00Z"),
+    lastChecked: toDate("2024-10-05T00:00:00Z"),
+    metrics: {
+      viewCount: 128,
+      compareCount: 29,
+      bookmarkCount: 12,
+      lastViewedAt: toDate("2024-10-17T07:10:00Z"),
+      lastComparedAt: toDate("2024-10-12T09:00:00Z"),
+    },
     includes: [
       { name: "CBC", groupName: "Lab" },
       { name: "HbA1c", groupName: "Lab" },
@@ -107,8 +144,8 @@ const packages = [
       { name: "Carotid Ultrasound", groupName: "Cardio" },
     ],
     histories: [
-      { price: 3290, recordedAt: new Date("2023-12-01T00:00:00Z") },
-      { price: 3490, recordedAt: new Date("2024-07-01T00:00:00Z") },
+      { price: 3290, recordedAt: toDate("2023-12-01T00:00:00Z") },
+      { price: 3490, recordedAt: toDate("2024-07-01T00:00:00Z") },
     ],
   },
   {
@@ -120,6 +157,18 @@ const packages = [
     priceNote: "ปรึกษาจิตแพทย์ 1 ครั้ง",
     tags: ["mental", "counseling"],
     hospitalKey: "srn",
+    description:
+      "คัดกรองภาวะซึมเศร้าและความเครียดด้วยแบบประเมินมาตรฐาน พร้อมเวลากับจิตแพทย์และเวิร์กช็อปผ่อนคลาย",
+    sourceUrl: "https://www.suanprung.go.th/packages/mental-wellness",
+    validFrom: toDate("2024-01-15T00:00:00Z"),
+    lastChecked: toDate("2024-10-08T00:00:00Z"),
+    metrics: {
+      viewCount: 94,
+      compareCount: 18,
+      bookmarkCount: 9,
+      lastViewedAt: toDate("2024-10-16T11:22:00Z"),
+      lastComparedAt: toDate("2024-10-11T03:55:00Z"),
+    },
     includes: [
       { name: "แบบประเมินภาวะซึมเศร้า", groupName: "Screening" },
       { name: "แบบประเมินความเครียด", groupName: "Screening" },
@@ -127,8 +176,8 @@ const packages = [
       { name: "เทคนิคผ่อนคลาย", groupName: "Therapy" },
     ],
     histories: [
-      { price: 2490, recordedAt: new Date("2024-01-15T00:00:00Z") },
-      { price: 2590, recordedAt: new Date("2024-08-15T00:00:00Z") },
+      { price: 2490, recordedAt: toDate("2024-01-15T00:00:00Z") },
+      { price: 2590, recordedAt: toDate("2024-08-15T00:00:00Z") },
     ],
   },
   {
@@ -140,6 +189,18 @@ const packages = [
     priceNote: "ตรวจ 2 ผู้ใหญ่ + 1 เด็ก",
     tags: ["family", "pediatric", "cardio"],
     hospitalKey: "bkk",
+        description:
+      "แพ็กเกจครอบครัวรวมตรวจเลือด อัลตร้าซาวด์ วัคซีนเด็ก และตรวจฟัน ในครั้งเดียวสำหรับครอบครัว",
+    sourceUrl: "https://www.bangkokhospital-chiangmai.com/packages/family-shield-combo",
+    validFrom: toDate("2024-05-01T00:00:00Z"),
+    lastChecked: toDate("2024-10-12T00:00:00Z"),
+    metrics: {
+      viewCount: 167,
+      compareCount: 41,
+      bookmarkCount: 19,
+      lastViewedAt: toDate("2024-10-19T04:45:00Z"),
+      lastComparedAt: toDate("2024-10-15T06:20:00Z"),
+    },
     includes: [
       { name: "CBC (ผู้ใหญ่)", groupName: "Adult" },
       { name: "CBC (เด็ก)", groupName: "Child" },
@@ -149,9 +210,7 @@ const packages = [
       { name: "EKG", groupName: "Adult" },
       { name: "Echocardiogram", groupName: "Adult" },
     ],
-    histories: [
-      { price: 8990, recordedAt: new Date("2024-07-01T00:00:00Z") },
-    ],
+        histories: [{ price: 8990, recordedAt: toDate("2024-07-01T00:00:00Z") }],
   },
   {
     slug: "cmr-pre-employment",
@@ -162,6 +221,18 @@ const packages = [
     priceNote: "รวมใบรับรองแพทย์เพื่อสมัครงาน",
     tags: ["blood", "xray", "vision", "hearing"],
     hospitalKey: "cmr",
+    description:
+      "ตรวจสุขภาพก่อนเริ่มงาน พร้อมใบรับรองแพทย์ ครอบคลุมเลือด ปัสสาวะ เอ็กซเรย์ปอด การมองเห็น และการได้ยิน",
+    sourceUrl: "https://www.chiangmairam.com/packages/pre-employment",
+    validFrom: toDate("2023-11-01T00:00:00Z"),
+    lastChecked: toDate("2024-10-04T00:00:00Z"),
+    metrics: {
+      viewCount: 153,
+      compareCount: 33,
+      bookmarkCount: 14,
+      lastViewedAt: toDate("2024-10-17T10:18:00Z"),
+      lastComparedAt: toDate("2024-10-13T02:15:00Z"),
+    },
     includes: [
       { name: "CBC", groupName: "Lab" },
       { name: "Urine Analysis", groupName: "Lab" },
@@ -183,6 +254,18 @@ const packages = [
     priceNote: "รวมพบอายุรแพทย์และโภชนากร",
     tags: ["blood", "diabetes", "nutrition"],
     hospitalKey: "mcc",
+    description:
+      "ควบคุมเบาหวานอย่างรอบด้าน ทั้งตรวจเลือด HbA1c, ไต, ไขมัน พร้อมปรึกษาอายุรแพทย์และนักโภชนาการ",
+    sourceUrl: "https://www.mccormick.in.th/packages/diabetes-care",
+    validFrom: toDate("2024-02-01T00:00:00Z"),
+    lastChecked: toDate("2024-10-09T00:00:00Z"),
+    metrics: {
+      viewCount: 121,
+      compareCount: 27,
+      bookmarkCount: 13,
+      lastViewedAt: toDate("2024-10-16T15:40:00Z"),
+      lastComparedAt: toDate("2024-10-12T05:55:00Z"),
+    },
     includes: [
       { name: "HbA1c", groupName: "Lab" },
       { name: "FBS", groupName: "Lab" },
@@ -192,8 +275,8 @@ const packages = [
       { name: "Dietitian Counseling", groupName: "Doctor" },
     ],
     histories: [
-      { price: 3190, recordedAt: new Date("2024-02-01T00:00:00Z"), notes: "โปรเปิดตัว" },
-      { price: 3290, recordedAt: new Date("2024-08-01T00:00:00Z") },
+      { price: 3190, recordedAt: toDate("2024-02-01T00:00:00Z"), notes: "โปรเปิดตัว" },
+      { price: 3290, recordedAt: toDate("2024-08-01T00:00:00Z") },
     ],
   },
   {
@@ -205,6 +288,18 @@ const packages = [
     priceNote: "รวมแพ็กเกจค่าโรงแรมผู้ป่วยวันเดียว",
     tags: ["cardio", "stress", "imaging"],
     hospitalKey: "bkk",
+      description:
+      "ดูแลหัวใจแบบครบวงจร ทั้ง Echocardiogram, Stress Test, Calcium Score และปรึกษาแพทย์เฉพาะทางหัวใจ",
+    sourceUrl: "https://www.bangkokhospital-chiangmai.com/packages/heart-protect-360",
+    validFrom: toDate("2024-04-01T00:00:00Z"),
+    lastChecked: toDate("2024-10-18T00:00:00Z"),
+    metrics: {
+      viewCount: 214,
+      compareCount: 62,
+      bookmarkCount: 28,
+      lastViewedAt: toDate("2024-10-19T14:25:00Z"),
+      lastComparedAt: toDate("2024-10-18T07:40:00Z"),
+    },
     includes: [
       { name: "EKG", groupName: "Cardio" },
       { name: "Echocardiogram", groupName: "Cardio" },
@@ -214,8 +309,8 @@ const packages = [
       { name: "Cardiologist Consultation", groupName: "Doctor" },
     ],
     histories: [
-      { price: 7490, recordedAt: new Date("2024-04-01T00:00:00Z") },
-      { price: 7590, recordedAt: new Date("2024-10-01T00:00:00Z") },
+      { price: 7490, recordedAt: toDate("2024-04-01T00:00:00Z") },
+      { price: 7590, recordedAt: toDate("2024-10-01T00:00:00Z") },
     ],
   },
   {
@@ -227,6 +322,18 @@ const packages = [
     priceNote: "โปรแกรม CBT-I 4 สัปดาห์",
     tags: ["sleep", "mental", "cbt"],
     hospitalKey: "srn",
+    description:
+      "สำหรับผู้ที่มีปัญหานอนไม่หลับ รวบรวมการตรวจ Sleep Test, CBT-I, และการโค้ชการนอนหลับแบบส่วนตัว",
+    sourceUrl: "https://www.suanprung.go.th/packages/sleep-recharge",
+    validFrom: toDate("2024-05-01T00:00:00Z"),
+    lastChecked: toDate("2024-10-13T00:00:00Z"),
+    metrics: {
+      viewCount: 102,
+      compareCount: 21,
+      bookmarkCount: 11,
+      lastViewedAt: toDate("2024-10-15T22:15:00Z"),
+      lastComparedAt: toDate("2024-10-13T12:30:00Z"),
+    },
     includes: [
       { name: "Sleep Quality Assessment", groupName: "Screening" },
       { name: "Polysomnography (1 คืน)", groupName: "Diagnostics" },
@@ -234,8 +341,8 @@ const packages = [
       { name: "Mindfulness Coaching", groupName: "Therapy" },
     ],
     histories: [
-      { price: 3790, recordedAt: new Date("2024-05-01T00:00:00Z") },
-      { price: 3990, recordedAt: new Date("2024-09-01T00:00:00Z") },
+      { price: 3790, recordedAt: toDate("2024-05-01T00:00:00Z") },
+      { price: 3990, recordedAt: toDate("2024-09-01T00:00:00Z") },
     ],
   },
   {
@@ -247,6 +354,18 @@ const packages = [
     priceNote: "แถมวิตามินสำหรับครรภ์แรก",
     tags: ["pregnancy", "ultrasound", "lab"],
     hospitalKey: "cmr",
+    description:
+      "สำหรับคุณแม่ตั้งครรภ์ไตรมาสแรก ครอบคลุมตรวจเลือด คัดกรองโรคติดเชื้อ และอัลตร้าซาวด์โดยสูตินรีแพทย์",
+    sourceUrl: "https://www.chiangmairam.com/packages/mom-to-be-trimester1",
+    validFrom: toDate("2024-01-01T00:00:00Z"),
+    lastChecked: toDate("2024-10-07T00:00:00Z"),
+    metrics: {
+      viewCount: 137,
+      compareCount: 32,
+      bookmarkCount: 16,
+      lastViewedAt: toDate("2024-10-18T01:05:00Z"),
+      lastComparedAt: toDate("2024-10-14T05:35:00Z"),
+    },
     includes: [
       { name: "Prenatal Lab Panel", groupName: "Lab" },
       { name: "Blood Type & Rh", groupName: "Lab" },
@@ -256,8 +375,8 @@ const packages = [
       { name: "Prenatal Vitamin Set", groupName: "Wellness" },
     ],
     histories: [
-      { price: 4890, recordedAt: new Date("2024-01-01T00:00:00Z"), notes: "Early bird" },
-      { price: 4990, recordedAt: new Date("2024-08-01T00:00:00Z") },
+      { price: 4890, recordedAt: toDate("2024-01-01T00:00:00Z"), notes: "Early bird" },
+      { price: 4990, recordedAt: toDate("2024-08-01T00:00:00Z") },
     ],
   },
   {
@@ -269,6 +388,18 @@ const packages = [
     priceNote: "รวมตรวจ Tumor Marker ครบทุกเพศ",
     tags: ["oncology", "tumor", "imaging"],
     hospitalKey: "bkk",
+    description:
+      "มุ่งเน้นการคัดกรองมะเร็งอย่างละเอียด ทั้ง Tumor Marker, CT, MRI, PET-CT และประเมินความเสี่ยงทางพันธุกรรม",
+    sourceUrl: "https://www.bangkokhospital-chiangmai.com/packages/onco-guard",
+    validFrom: toDate("2024-02-01T00:00:00Z"),
+    lastChecked: toDate("2024-10-17T00:00:00Z"),
+    metrics: {
+      viewCount: 98,
+      compareCount: 24,
+      bookmarkCount: 10,
+      lastViewedAt: toDate("2024-10-19T10:55:00Z"),
+      lastComparedAt: toDate("2024-10-17T09:25:00Z"),
+    },
     includes: [
       { name: "Comprehensive Tumor Markers", groupName: "Lab" },
       { name: "Low-dose Chest CT", groupName: "Imaging" },
@@ -278,8 +409,8 @@ const packages = [
       { name: "Genetic Risk Assessment", groupName: "Lab" },
     ],
     histories: [
-      { price: 13400, recordedAt: new Date("2024-02-01T00:00:00Z"), notes: "ราคาเปิดตัว" },
-      { price: 12900, recordedAt: new Date("2024-09-01T00:00:00Z"), notes: "ลดพิเศษปลายปี" },
+      { price: 13400, recordedAt: toDate("2024-02-01T00:00:00Z"), notes: "ราคาเปิดตัว" },
+      { price: 12900, recordedAt: toDate("2024-09-01T00:00:00Z"), notes: "ลดพิเศษปลายปี" },
     ],
   },
   {
@@ -291,6 +422,18 @@ const packages = [
     priceNote: "รวมวัคซีนไข้เหลืองและใบรับรองแพทย์",
     tags: ["travel", "vaccine", "lab"],
     hospitalKey: "mcc",
+    description:
+      "สำหรับนักเดินทางระหว่างประเทศ มีวัคซีนที่จำเป็น ตรวจสุขภาพพื้นฐาน และคำแนะนำการป้องกันโรคในแต่ละประเทศ",
+    sourceUrl: "https://www.mccormick.in.th/packages/travel-ready-asia",
+    validFrom: toDate("2024-03-15T00:00:00Z"),
+    lastChecked: toDate("2024-10-06T00:00:00Z"),
+    metrics: {
+      viewCount: 109,
+      compareCount: 23,
+      bookmarkCount: 11,
+      lastViewedAt: toDate("2024-10-15T05:48:00Z"),
+      lastComparedAt: toDate("2024-10-12T16:25:00Z"),
+    },
     includes: [
       { name: "Travel Risk Consultation", groupName: "Doctor" },
       { name: "Yellow Fever Vaccine", groupName: "Vaccine" },
@@ -300,8 +443,8 @@ const packages = [
       { name: "Fit-to-Fly Certificate", groupName: "Documentation" },
     ],
     histories: [
-      { price: 2790, recordedAt: new Date("2024-03-15T00:00:00Z"), notes: "Songkran Promo" },
-      { price: 2890, recordedAt: new Date("2024-10-15T00:00:00Z") },
+      { price: 2790, recordedAt: toDate("2024-03-15T00:00:00Z"), notes: "Songkran Promo" },
+      { price: 2890, recordedAt: toDate("2024-10-15T00:00:00Z") },
     ],
   },
   {
@@ -313,6 +456,18 @@ const packages = [
     priceNote: "เหมาะสำหรับเด็กอายุ 4-10 ปี",
     tags: ["kid", "adhd", "therapy"],
     hospitalKey: "srn",
+    description:
+      "ประเมินพัฒนาการและสมาธิเด็กแบบหลายมิติ พร้อมกิจกรรมบำบัดและโค้ชผู้ปกครองแบบใกล้ชิด",
+    sourceUrl: "https://www.suanprung.go.th/packages/kids-focus",
+    validFrom: toDate("2024-04-01T00:00:00Z"),
+    lastChecked: toDate("2024-10-11T00:00:00Z"),
+    metrics: {
+      viewCount: 87,
+      compareCount: 16,
+      bookmarkCount: 8,
+      lastViewedAt: toDate("2024-10-16T18:05:00Z"),
+      lastComparedAt: toDate("2024-10-10T23:25:00Z"),
+    },
     includes: [
       { name: "Developmental Screening", groupName: "Screening" },
       { name: "ADHD/ADD Assessment", groupName: "Screening" },
@@ -321,8 +476,8 @@ const packages = [
       { name: "Parent Coaching", groupName: "Therapy" },
     ],
     histories: [
-      { price: 3490, recordedAt: new Date("2024-04-01T00:00:00Z"), notes: "Summer Camp" },
-      { price: 3690, recordedAt: new Date("2024-09-01T00:00:00Z") },
+      { price: 3490, recordedAt: toDate("2024-04-01T00:00:00Z"), notes: "Summer Camp" },
+      { price: 3690, recordedAt: toDate("2024-09-01T00:00:00Z") },
     ],
   },
   {
@@ -334,6 +489,18 @@ const packages = [
     priceNote: "รวม FibroScan ตับและอัลตร้าซาวด์",
     tags: ["liver", "hepatitis", "ultrasound"],
     hospitalKey: "cmr",
+    description:
+      "ดูแลตับครบวงจร ตรวจการทำงานตับ เชื้อไวรัส อัลตร้าซาวด์ และวัดความแข็งของตับ พร้อมพบแพทย์เฉพาะทาง",
+    sourceUrl: "https://www.chiangmairam.com/packages/liver-care",
+    validFrom: toDate("2024-05-01T00:00:00Z"),
+    lastChecked: toDate("2024-10-16T00:00:00Z"),
+    metrics: {
+      viewCount: 205,
+      compareCount: 57,
+      bookmarkCount: 24,
+      lastViewedAt: toDate("2024-10-19T16:10:00Z"),
+      lastComparedAt: toDate("2024-10-17T02:55:00Z"),
+    },
     includes: [
       { name: "Liver Function Test", groupName: "Lab" },
       { name: "Hepatitis B/C Panel", groupName: "Lab" },
@@ -343,8 +510,8 @@ const packages = [
       { name: "Hepatologist Consultation", groupName: "Doctor" },
     ],
     histories: [
-      { price: 4490, recordedAt: new Date("2024-05-01T00:00:00Z") },
-      { price: 4590, recordedAt: new Date("2024-10-01T00:00:00Z") },
+      { price: 4490, recordedAt: toDate("2024-05-01T00:00:00Z") },
+      { price: 4590, recordedAt: toDate("2024-10-01T00:00:00Z") },
     ],
   },
 ];
@@ -410,6 +577,7 @@ async function seedHospitals() {
 }
 
 async function seedPackages(hospitalMap) {
+  const createdPackages = new Map();
   for (const pkg of packages) {
     const hospital = hospitalMap.get(pkg.hospitalKey);
     if (!hospital) {
@@ -428,6 +596,11 @@ async function seedPackages(hospitalMap) {
         priceNote: pkg.priceNote,
         status: "APPROVED",
         tags: pkg.tags,
+        description: pkg.description,
+        sourceUrl: pkg.sourceUrl,
+        validFrom: pkg.validFrom,
+        validTo: pkg.validTo ?? null,
+        lastChecked: pkg.lastChecked ?? null,
       },
       create: {
         hospitalId: hospital.id,
@@ -439,6 +612,11 @@ async function seedPackages(hospitalMap) {
         priceNote: pkg.priceNote,
         status: "APPROVED",
         tags: pkg.tags,
+        description: pkg.description,
+        sourceUrl: pkg.sourceUrl,
+        validFrom: pkg.validFrom,
+        validTo: pkg.validTo ?? null,
+        lastChecked: pkg.lastChecked ?? null,
       },
     });
 
@@ -466,27 +644,35 @@ async function seedPackages(hospitalMap) {
       });
     }
 
+    const metrics = pkg.metrics ?? {};
     await prisma.packageMetric.upsert({
       where: { packageId: record.id },
       update: {
-        viewCount: { increment: 25 },
-        compareCount: { increment: 5 },
-        bookmarkCount: { increment: 2 },
+        viewCount: metrics.viewCount ?? 40,
+        compareCount: metrics.compareCount ?? 8,
+        bookmarkCount: metrics.bookmarkCount ?? 4,
+        lastViewedAt: metrics.lastViewedAt ?? new Date(),
+        lastComparedAt: metrics.lastComparedAt ?? new Date(),
       },
       create: {
         packageId: record.id,
-        viewCount: 25,
-        compareCount: 5,
-        bookmarkCount: 2,
+        viewCount: metrics.viewCount ?? 40,
+        compareCount: metrics.compareCount ?? 8,
+        bookmarkCount: metrics.bookmarkCount ?? 4,
+        lastViewedAt: metrics.lastViewedAt ?? new Date(),
+        lastComparedAt: metrics.lastComparedAt ?? new Date(),
       },
-    });
+    }); 
+    createdPackages.set(pkg.slug, record);
   }
+return createdPackages;
 }
 
 async function seedUsers() {
+  const created = new Map();
   for (const user of demoUsers) {
     const passwordHash = await bcrypt.hash(user.password, 10);
-    await prisma.user.upsert({
+    const record = await prisma.user.upsert({
       where: { email: user.email },
       update: {
         name: user.name,
@@ -500,21 +686,232 @@ async function seedUsers() {
         passwordHash,
       },
     });
+    created.set(user.email, record);
   }
+  return created;
 }
+async function seedUserContent(userMap, packageMap) {
+  const demoUser = userMap.get("demo@healthcheck.local");
+  if (!demoUser) return;
 
+  const getPackageId = (slug) => packageMap.get(slug)?.id;
+  const packageId = (slug) => {
+    const id = getPackageId(slug);
+    if (!id) console.warn(`Package ${slug} not found when seeding user content`);
+    return id;
+  };
+
+  console.info("Seeding dashboard/bookmark/cart data for demo user...");
+
+  await prisma.bookmark.deleteMany({ where: { userId: demoUser.id } });
+  const bookmarkData = ["cmr-basic-male", "bkk-heart-protect", "cmr-liver-care"].map((slug, index) => ({
+    userId: demoUser.id,
+    packageId: packageId(slug),
+    createdAt: new Date(Date.now() - (index + 1) * 36e5),
+  }));
+  await prisma.bookmark.createMany({ data: bookmarkData.filter((item) => item.packageId) });
+
+  await prisma.savedSearch.deleteMany({ where: { userId: demoUser.id } });
+  await prisma.savedSearch.createMany({
+    data: [
+      {
+        userId: demoUser.id,
+        name: "หัวใจครบวงจร",
+        params: {
+          priceMin: 5000,
+          priceMax: 9000,
+          tags: ["cardio"],
+        },
+        createdAt: toDate("2024-10-14T04:00:00Z"),
+      },
+      {
+        userId: demoUser.id,
+        name: "สำหรับครอบครัว",
+        params: {
+          hospitalIds: [packageId("bkk-family-combo") ? packageMap.get("bkk-family-combo").hospitalId : null].filter(Boolean),
+          tags: ["family"],
+        },
+        createdAt: toDate("2024-10-12T10:30:00Z"),
+      },
+    ],
+  });
+
+  await prisma.searchLog.deleteMany({ where: { userId: demoUser.id } });
+  await prisma.searchLog.createMany({
+    data: [
+      {
+        userId: demoUser.id,
+        filters: { q: "หัวใจ", sort: "popular" },
+        results: 4,
+        createdAt: toDate("2024-10-15T06:20:00Z"),
+      },
+      {
+        userId: demoUser.id,
+        filters: { priceMax: 4000, gender: "female" },
+        results: 6,
+        createdAt: toDate("2024-10-14T09:45:00Z"),
+      },
+      {
+        userId: demoUser.id,
+        filters: { hospitalId: packageMap.get("cmr-basic-male")?.hospitalId, sort: "updated" },
+        results: 5,
+        createdAt: toDate("2024-10-13T03:15:00Z"),
+      },
+    ],
+  });
+
+  await prisma.compareSnapshot.deleteMany({ where: { userId: demoUser.id } });
+  const snapshotConfigs = [
+    {
+      slug: "demo-heart-vs-basic",
+      packageSlugs: ["bkk-heart-protect", "cmr-basic-male"],
+      note: "เปรียบเทียบแพ็กเกจหัวใจและตรวจพื้นฐาน",
+    },
+    {
+      slug: "demo-family-packages",
+      packageSlugs: ["bkk-family-combo", "mcc-travel-asia", "srn-kids-focus"],
+      note: "ตัวเลือกสำหรับครอบครัวและเด็ก",
+    },
+  ];
+  for (const snapshot of snapshotConfigs) {
+    const packageIds = snapshot.packageSlugs.map(packageId).filter(Boolean);
+    if (!packageIds.length) continue;
+    await prisma.compareSnapshot.upsert({
+      where: { slug: snapshot.slug },
+      update: {
+        packageIds,
+        userId: demoUser.id,
+        note: snapshot.note,
+        expiresAt: toDate("2024-12-01T00:00:00Z"),
+      },
+      create: {
+        slug: snapshot.slug,
+        packageIds,
+        userId: demoUser.id,
+        note: snapshot.note,
+        expiresAt: toDate("2024-12-01T00:00:00Z"),
+      },
+    });
+  }
+
+  await prisma.packageView.deleteMany({ where: { userId: demoUser.id } });
+  const viewData = [
+    {
+      packageId: packageId("cmr-liver-care"),
+      userId: demoUser.id,
+      type: "VIEW",
+      createdAt: toDate("2024-10-19T16:30:00Z"),
+    },
+    {
+      packageId: packageId("bkk-heart-protect"),
+      userId: demoUser.id,
+      type: "COMPARE",
+      createdAt: toDate("2024-10-18T08:10:00Z"),
+    },
+    {
+      packageId: packageId("bkk-family-combo"),
+      userId: demoUser.id,
+      type: "VIEW",
+      createdAt: toDate("2024-10-17T11:45:00Z"),
+    },
+  ].filter((item) => item.packageId);
+  if (viewData.length) {
+    await prisma.packageView.createMany({ data: viewData });
+  }
+
+  await prisma.notification.deleteMany({ where: { userId: demoUser.id } });
+  await prisma.notification.createMany({
+    data: [
+      {
+        userId: demoUser.id,
+        type: "PRICE_DROP",
+        payload: {
+          packageId: packageId("bkk-heart-protect"),
+          packageTitle: "Heart Protect 360",
+          newPrice: 7590,
+        },
+        createdAt: toDate("2024-10-18T09:00:00Z"),
+      },
+      {
+        userId: demoUser.id,
+        type: "PACKAGE_APPROVED",
+        payload: {
+          packageId: packageId("cmr-liver-care"),
+          packageTitle: "Liver Care Clinic",
+        },
+        createdAt: toDate("2024-10-16T02:30:00Z"),
+      },
+    ],
+  });
+
+  await prisma.notificationSubscription.deleteMany({ where: { userId: demoUser.id } });
+  await prisma.notificationSubscription.createMany({
+    data: [
+      {
+        userId: demoUser.id,
+        packageId: packageId("cmr-liver-care"),
+        type: "PRICE_DROP",
+      },
+      {
+        userId: demoUser.id,
+        packageId: packageId("bkk-heart-protect"),
+        type: "PACKAGE_APPROVED",
+      },
+    ].filter((item) => item.packageId),
+  });
+
+  await prisma.savedCompare.deleteMany({ where: { userId: demoUser.id } });
+  await prisma.savedCompare.createMany({
+    data: [
+      {
+        userId: demoUser.id,
+        packageIds: ["cmr-basic-male", "cmr-pre-employment", "mcc-diabetes-care"].map(packageId).filter(Boolean),
+        note: "แพ็กเกจงานบริษัท",
+      },
+      {
+        userId: demoUser.id,
+        packageIds: ["cmr-liver-care", "bkk-onco-screen"].map(packageId).filter(Boolean),
+        note: "ตรวจเฉพาะทาง",
+      },
+    ],
+  });
+
+  const cart = await prisma.cart.upsert({
+    where: { userId: demoUser.id },
+    update: {},
+    create: { userId: demoUser.id },
+  });
+  await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+  await prisma.cartItem.createMany({
+    data: [
+      {
+        cartId: cart.id,
+        packageId: packageId("cmr-liver-care"),
+        quantity: 1,
+      },
+      {
+        cartId: cart.id,
+        packageId: packageId("mcc-diabetes-care"),
+        quantity: 1,
+      },
+    ].filter((item) => item.packageId),
+  });
+}
 async function main() {
   console.info("Seeding hospitals...");
   const hospitalMap = await seedHospitals();
   console.info(`Seeded ${hospitalMap.size} hospitals`);
 
   console.info("Seeding packages...");
-  await seedPackages(hospitalMap);
-  console.info(`Seeded ${packages.length} packages with includes & histories`);
+  const packageMap = await seedPackages(hospitalMap);
+  console.info(`Seeded ${packageMap.size} packages with includes & histories`);
 
   console.info("Seeding demo users...");
-  await seedUsers();
-  console.info(`Seeded ${demoUsers.length} demo users`);
+  const userMap = await seedUsers();
+  console.info(`Seeded ${userMap.size} demo users`);
+
+  await seedUserContent(userMap, packageMap);
+  console.info("Demo user content ready");
 }
 
 main()
