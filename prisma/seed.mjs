@@ -368,29 +368,42 @@ const demoUsers = [
     role: Role.USER,
     password: "user1234",
   },
+  {
+    email: "demo@healthcheck.local",
+    name: "Demo User",
+    role: Role.USER,
+    password: "demo1234",
+  },
 ];
 
 async function seedHospitals() {
   const created = new Map();
   for (const hospital of hospitals) {
-    const record = await prisma.hospital.upsert({
-      where: { name: hospital.name },
-      update: {
-        shortName: hospital.shortName,
-        district: hospital.district,
-        phone: hospital.phone,
-        website: hospital.website,
-        logoUrl: hospital.logoUrl,
-      },
-      create: {
-        name: hospital.name,
-        shortName: hospital.shortName,
-        district: hospital.district,
-        phone: hospital.phone,
-        website: hospital.website,
-        logoUrl: hospital.logoUrl,
-      },
-    });
+    const existing = await prisma.hospital.findFirst({ where: { name: hospital.name } });
+    let record;
+    if (existing) {
+      record = await prisma.hospital.update({
+        where: { id: existing.id },
+        data: {
+          shortName: hospital.shortName,
+          district: hospital.district,
+          phone: hospital.phone,
+          website: hospital.website,
+          logoUrl: hospital.logoUrl,
+        },
+      });
+    } else {
+      record = await prisma.hospital.create({
+        data: {
+          name: hospital.name,
+          shortName: hospital.shortName,
+          district: hospital.district,
+          phone: hospital.phone,
+          website: hospital.website,
+          logoUrl: hospital.logoUrl,
+        },
+      });
+    }
     created.set(hospital.key, record);
   }
   return created;
