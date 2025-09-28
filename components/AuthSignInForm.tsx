@@ -8,10 +8,14 @@ import Link from "next/link";
 import { useToast } from "@/components/ToastProvider";
 import styles from "./AuthSignInForm.module.css";
 
-export default function AuthSignInForm() {
+type AuthSignInFormProps = {
+  defaultCallbackUrl?: string;
+};
+
+export default function AuthSignInForm({ defaultCallbackUrl = "/" }: AuthSignInFormProps) {
   const search = useSearchParams();
   const { push } = useToast();
-  const callbackUrl = search.get("callbackUrl") ?? "/";
+  const callbackUrl = search.get("callbackUrl") ?? defaultCallbackUrl;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(search.get("error"));
   const [showPassword, setShowPassword] = useState(false);

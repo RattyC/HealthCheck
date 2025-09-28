@@ -33,12 +33,20 @@ export default function UserMenu({ session }: Props) {
   const user = session?.user;
   if (!user || typeof user !== "object" || typeof user.id !== "string" || user.id.length === 0) {
     return (
-      <Link
-        href="/auth/sign-in"
-        className="rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-      >
-        เข้าสู่ระบบ
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link
+          href="/auth/sign-in"
+          className="rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          เข้าสู่ระบบ
+        </Link>
+        <Link
+          href="/auth/admin-sign-in"
+          className="rounded-md border border-brand/40 px-3 py-1.5 text-sm font-medium text-brand transition hover:bg-brand hover:text-white dark:border-brand/60 dark:text-brand dark:hover:text-white"
+        >
+          แอดมิน
+        </Link>
+      </div>
     );
   }
 

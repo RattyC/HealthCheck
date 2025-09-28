@@ -63,9 +63,11 @@ export default async function SignInPage({
               เข้าสู่ระบบเพื่อเริ่มจัดการแพ็กเกจ วิเคราะห์ข้อมูล และส่งต่อข้อมูลให้ทีมของคุณ
             </p>
           </div>
-          <AuthSignInForm />
+          <AuthSignInForm defaultCallbackUrl="/dashboard" />
           <div className={styles.signInFootnote}>
             ยังไม่มีบัญชี? <Link href="/support/contact">ติดต่อเพื่อขอสิทธิ์เข้าถึง</Link>
+            <br />
+            ผู้ดูแลระบบ? <Link href="/auth/admin-sign-in">เข้าสู่ระบบสำหรับแอดมิน</Link>
           </div>
         </section>
       </div>

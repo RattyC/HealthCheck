@@ -14,7 +14,7 @@
 - API `/api/v1/*` (packages, bookmarks, cart, compare) และ `/api/healthz` health check
 
 ## โครงสร้างโดยย่อ
-- `app/` ทุกหน้าและ API route (healthz, auth, packages, cart, admin)
+- `app/` ทุกหน้าและ API route (healthz, auth, admin-sign-in, packages, cart, admin)
 - `components/` UI หลัก: FilterBar, PackageCard, CompareClient, Auth forms, cart buttons
 - `lib/` Prisma client, session tools, rate-limit, logger
 - `prisma/schema.prisma` สคีมา + `prisma/seed.mjs` ชุด seed data (4 โรงพยาบาล, 13 แพ็กเกจ)
@@ -59,6 +59,10 @@ npm run dev
 | Editor    | `editor@healthcheck.local`  | `editor1234`|
 | User      | `user@healthcheck.local`    | `user1234` |
 
+### Admin sign-in
+- หน้าผู้ใช้ทั่วไป: `/auth/sign-in` (default redirect `/dashboard`)
+- หน้าผู้ดูแลระบบ: `/auth/admin-sign-in` (default redirect `/admin`)
+
 ## API สำคัญ
 - `GET /api/v1/packages` – ค้นหาแพ็กเกจตามฟิลเตอร์ query string
 - `GET /api/v1/cart` / `POST /api/v1/cart` / `DELETE /api/v1/cart/:packageId`
@@ -71,6 +75,7 @@ npm run dev
 - เพิ่มตาราง `Cart` / `CartItem` สำหรับตะกร้า (รัน migrate dev หลังดึงโค้ดล่าสุด)
 - สามารถขยายฟีเจอร์ Compare, Bookmark, Admin CMS ตามแผนได้ทันที
 - ถ้าไม่มี Docker หรือใช้ฐานข้อมูลภายนอก (Supabase/Neon) ให้ตั้ง `DATABASE_URL` เป็นค่าจากผู้ให้บริการ แล้วข้ามขั้นตอน `db:up`
+- **Deploy บน Vercel:** ต้องใช้ฐานข้อมูลภายนอกที่เข้าถึงผ่านอินเทอร์เน็ต (เช่น Supabase, Neon) แล้วตั้ง `DATABASE_URL` ใน Environment Variables ให้ชี้ไปยัง host นั้น ไม่สามารถใช้ `db:5432` จาก Docker ได้
 
 ## แผนงานถัดไป
 - ต่อ KPI/production checklist จาก `docs/production-checklist.md` (UX, security, ops)

@@ -1,40 +1,65 @@
 // Authenticated cart summary where users review, remove, and proceed with selected packages.
 import Link from "next/link";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
 import RemoveCartItemButton from "@/components/RemoveCartItemButton";
 
 export const dynamic = "force-dynamic";
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB" }).format(value);
-}
+const currency = new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB" });
 
 export default async function CartPage() {
   const user = await requireUser("/cart");
 
-  const cart = await prisma.cart.findUnique({
-    where: { userId: user.id },
-    include: {
-      items: {
-        include: {
-          package: {
-            select: {
-              id: true,
-              title: true,
-              slug: true,
-              basePrice: true,
-              hospital: { select: { name: true } },
+  let items:
+    | Array<{
+        id: string;
+        quantity: number;
+        package: {
+          id: string;
+          title: string;
+          slug: string;
+          basePrice: number;
+          hospital: { name: string | null } | null;
+        };
+      }>
+    | undefined;
+  let cartError: string | null = null;
+
+  try {
+    const cart = await prisma.cart.findUnique({
+      where: { userId: user.id },
+      include: {
+        items: {
+          include: {
+            package: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                basePrice: true,
+                hospital: { select: { name: true } },
+              },
             },
           },
+          orderBy: { addedAt: "desc" },
         },
-        orderBy: { addedAt: "desc" },
       },
-    },
-  });
+    });
+    items = cart?.items ?? [];
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
+      cartError = "ยังไม่ได้สร้างตารางตะกร้าในฐานข้อมูล กรุณารัน prisma migrate ก่อนใช้งาน";
+    } else if (error instanceof Prisma.PrismaClientInitializationError) {
+      cartError = "ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาตรวจสอบ DATABASE_URL";
+    } else {
+      cartError = "เกิดข้อผิดพลาดในการดึงข้อมูลตะกร้า";
+    }
+  }
 
-  const items = cart?.items ?? [];
-  const total = items.reduce((sum, item) => sum + item.quantity * item.package.basePrice, 0);
+  const list = items ?? [];
+  const total = list.reduce((sum, item) => sum + item.quantity * item.package.basePrice, 0);
 
   return (
     <section className="space-y-8">
@@ -43,7 +68,14 @@ export default async function CartPage() {
         <p className="text-sm text-slate-600 dark:text-slate-300">จัดการแพ็กเกจที่คุณต้องการสอบถามหรือจองกับโรงพยาบาล</p>
       </header>
 
-      {items.length === 0 ? (
+      {cartError ? (
+        <div className="rounded-2xl border border-dashed border-rose-300 bg-rose-50/80 p-10 text-center text-rose-600 shadow-sm dark:border-rose-500/70 dark:bg-rose-500/10 dark:text-rose-200">
+          <p className="text-base font-medium">{cartError}</p>
+          <p className="mt-2 text-sm">
+            ตั้งค่า `DATABASE_URL` ให้ถูกต้อง จากนั้นรัน <code>npx prisma migrate deploy</code> และ <code>npm run prisma:seed</code>
+          </p>
+        </div>
+      ) : list.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <p className="text-base font-medium">ยังไม่มีแพ็กเกจในตะกร้า</p>
           <p className="mt-2 text-sm">เพิ่มแพ็กเกจที่สนใจจากหน้ารายละเอียดเพื่อเตรียมส่งคำขอได้เลย</p>
@@ -59,10 +91,10 @@ export default async function CartPage() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
           <div className="space-y-4">
-            {items.map((item) => (
+            {list.map((item) => (
               <article
                 key={item.id}
-                className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/70"
+                className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70"
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
@@ -80,7 +112,7 @@ export default async function CartPage() {
                     <div className="text-right text-sm text-slate-600 dark:text-slate-300">
                       <div>จำนวน: {item.quantity}</div>
                       <div className="font-semibold text-slate-900 dark:text-white">
-                        {formatCurrency(item.package.basePrice * item.quantity)}
+                        {currency.format(item.package.basePrice * item.quantity)}
                       </div>
                     </div>
                     <RemoveCartItemButton packageId={item.package.id} />
@@ -94,11 +126,11 @@ export default async function CartPage() {
             <dl className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300">
               <div className="flex items-center justify-between">
                 <dt>จำนวนแพ็กเกจ</dt>
-                <dd>{items.length} รายการ</dd>
+                <dd>{list.length} รายการ</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt>รวมทั้งหมด</dt>
-                <dd className="text-base font-semibold text-slate-900 dark:text-white">{formatCurrency(total)}</dd>
+                <dd className="text-base font-semibold text-slate-900 dark:text-white">{currency.format(total)}</dd>
               </div>
             </dl>
             <p className="mt-4 rounded-lg bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
