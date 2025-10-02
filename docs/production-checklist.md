@@ -11,6 +11,7 @@ Use this list to track the remaining polish before handing HealthCheck CM Price 
 - [ ] Ensure consistent spacing, typography scale, and color usage across layouts
 
 ## 2. User-Facing Features
+- [x] Personalise หน้าแรกและโปรโมชันตามบทบาท (ผู้เยี่ยมชม/ผู้ใช้/แอดมิน) พร้อมลิงก์ไปยังกระบวนการที่เกี่ยวข้อง
 - [ ] Make compare selections shareable via URL or social share dialog
 - [ ] Plot price history using charts (e.g., Recharts) in package detail and dashboard
 - [ ] Highlight "Hot Deals" / trending packages on the home page
@@ -27,6 +28,7 @@ Use this list to track the remaining polish before handing HealthCheck CM Price 
 ## 4. Performance, Stability, Security
 - [ ] Add PostgreSQL indexes on `HealthPackage(status, hospitalId, updatedAt)` and other hot queries
 - [ ] Use ISR cache tags or SWR revalidation for package lists to reduce DB load
+- [x] ตั้งค่า server timeouts (`withTimeout`) สำหรับสรุปหน้าแรกตามบทบาท ลดโอกาสที่ DB ช้าแล้วทำให้ UX กระตุก
 - [ ] Validate all API payloads with Zod and return friendly errors
 - [ ] Enforce server-side role checks (RBAC) for every admin route & API
 - [ ] Apply rate limiting to public APIs (search, compare, cart)
