@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .interactive-card {
+    @apply transition-transform duration-200 ease-out hover:-translate-y-1 hover:shadow-lg focus-within:-translate-y-1 focus-within:shadow-lg;
+  }
+
+  .interactive-button {
+    @apply transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900;
+  }
+
+  .interactive-button:hover:not(:disabled) {
+    @apply -translate-y-0.5 shadow-md;
+  }
+
+  .interactive-chip {
+    @apply transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand;
+  }
+}
+
 :root {
   color-scheme: light;
 }

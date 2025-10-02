@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Check, Link2, Loader2, Share2, Trash2 } from "lucide-react";
 import { useCompare } from "@/components/CompareContext";
 import { useToast } from "@/components/ToastProvider";
 
@@ -19,8 +20,10 @@ export type ComparePackage = {
 export default function CompareClient({ initialPackages }: { initialPackages: ComparePackage[] }) {
   const router = useRouter();
   const compare = useCompare();
-  const [copied, setCopied] = useState(false);
+  const [copiedQuickLink, setCopiedQuickLink] = useState(false);
+  const [copiedShareLink, setCopiedShareLink] = useState(false);
   const [origin, setOrigin] = useState<string>("");
+  const [isSharing, setIsSharing] = useState(false);
   const { push } = useToast();
 
   useEffect(() => {
@@ -47,9 +50,29 @@ export default function CompareClient({ initialPackages }: { initialPackages: Co
 
   const idsQuery = items.map((pkg) => pkg.id).join(",");
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const targetSearch = items.length ? `?ids=${encodeURIComponent(idsQuery)}` : "";
+    if (window.location.search !== targetSearch) {
+      router.replace(`/compare${targetSearch}`, { scroll: false });
+    }
+  }, [idsQuery, items.length, router]);
+
+  useEffect(() => {
+    setCopiedQuickLink(false);
+    setCopiedShareLink(false);
+  }, [idsQuery]);
+
+  const quickLink = origin ? `${origin}/compare${idsQuery ? `?ids=${idsQuery}` : ""}` : `?ids=${idsQuery}`;
+  const hasEnoughToShare = items.length >= 2;
+
   async function handleShare() {
+    if (!hasEnoughToShare) {
+      push({ title: "เลือกอย่างน้อย 2 แพ็กเกจเพื่อแชร์", variant: "error" });
+      return;
+    }
+    setIsSharing(true);
     try {
-      setCopied(false);
       const response = await fetch("/api/v1/compare/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -58,11 +81,33 @@ export default function CompareClient({ initialPackages }: { initialPackages: Co
       if (!response.ok) throw new Error("แชร์ไม่สำเร็จ");
       const data = await response.json();
       const shareUrl = `${window.location.origin}/compare?slug=${data.slug}`;
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      push({ title: "คัดลอกลิงก์สำหรับแชร์แล้ว", variant: "success" });
+
+      if (navigator.share && navigator.canShare?.({ url: shareUrl })) {
+        await navigator.share({
+          title: "เปรียบเทียบแพ็กเกจสุขภาพ",
+          text: "ดูแพ็กเกจที่ฉันเลือกไว้",
+          url: shareUrl,
+        });
+        push({ title: "เปิดหน้าต่างแชร์แล้ว", variant: "success" });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopiedShareLink(true);
+        push({ title: "คัดลอกลิงก์สำหรับแชร์แล้ว", variant: "success" });
+      }
     } catch (error: unknown) {
       push({ title: error instanceof Error ? error.message : "แชร์ไม่สำเร็จ", variant: "error" });
+    } finally {
+      setIsSharing(false);
+    }
+  }
+
+  async function handleCopyQuickLink() {
+    try {
+      await navigator.clipboard.writeText(quickLink);
+      setCopiedQuickLink(true);
+      push({ title: "คัดลอกลิงก์แล้ว", variant: "success" });
+    } catch (error: unknown) {
+      push({ title: error instanceof Error ? error.message : "คัดลอกไม่ได้", variant: "error" });
     }
   }
 
@@ -89,22 +134,25 @@ export default function CompareClient({ initialPackages }: { initialPackages: Co
           <button
             type="button"
             onClick={handleShare}
-            className="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            disabled={isSharing}
+            className="interactive-button inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            {copied ? "คัดลอกแล้ว" : "แชร์ลิงก์"}
+            {isSharing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : copiedShareLink ? <Check className="h-4 w-4" aria-hidden /> : <Share2 className="h-4 w-4" aria-hidden />}
+            {isSharing ? "กำลังสร้างลิงก์" : copiedShareLink ? "คัดลอกลิงก์แชร์แล้ว" : "แชร์ลิงก์ถาวร"}
           </button>
           <button
             type="button"
             onClick={() => compare.clear()}
-            className="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="interactive-button inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
           >
+            <Trash2 className="h-4 w-4" aria-hidden />
             ล้างรายการ
           </button>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {items.map((pkg) => (
-          <article key={pkg.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+          <article key={pkg.id} className="interactive-card flex flex-col gap-3 rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{pkg.title}</h2>
@@ -113,7 +161,7 @@ export default function CompareClient({ initialPackages }: { initialPackages: Co
               <button
                 type="button"
                 onClick={() => handleRemove(pkg.id)}
-                className="rounded-full border border-slate-200 px-2 py-0.5 text-xs text-slate-400 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-500 dark:hover:bg-slate-800"
+                className="interactive-button rounded-full border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-400 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500 dark:hover:bg-slate-800"
               >
                 ลบ
               </button>
@@ -148,8 +196,20 @@ export default function CompareClient({ initialPackages }: { initialPackages: Co
           </article>
         ))}
       </div>
-      <div className="rounded-lg border border-dashed border-slate-300 bg-white/70 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
-        แชร์ลิงก์นี้: <span className="font-mono">{origin ? `${origin}/compare?ids=${idsQuery}` : `?ids=${idsQuery}`}</span>
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-white/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+        <span className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-200">
+          <Link2 className="h-4 w-4" aria-hidden /> ลิงก์ด่วน
+        </span>
+        <code className="flex-1 truncate rounded bg-slate-100 px-2 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+          {quickLink}
+        </code>
+        <button
+          type="button"
+          onClick={handleCopyQuickLink}
+          className="interactive-button inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          {copiedQuickLink ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Link2 className="h-3.5 w-3.5" aria-hidden />} {copiedQuickLink ? "คัดลอกแล้ว" : "คัดลอก"}
+        </button>
       </div>
     </div>
   );

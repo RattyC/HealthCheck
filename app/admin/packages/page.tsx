@@ -121,7 +121,7 @@ export default async function AdminPackages({
                   <td className="p-2 text-right text-slate-700 dark:text-slate-200">฿{pkg.basePrice.toLocaleString()}</td>
                   <td className="p-2 text-center"><AdminStatusBadge status={pkg.status} /></td>
                   <td className="p-2 text-xs text-slate-500 dark:text-slate-400">{new Date(pkg.updatedAt).toLocaleString()}</td>
-                  <td className="p-2"><AdminActions id={pkg.id} /></td>
+                  <td className="p-2"><AdminActions id={pkg.id} status={pkg.status} /></td>
                 </tr>
               ))}
             </tbody>

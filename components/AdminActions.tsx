@@ -3,7 +3,6 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
-import type { PackageStatus } from "@prisma/client";
 import { useToast } from "@/components/ToastProvider";
 
 type Action = "approve" | "reject" | "archive";
@@ -56,13 +55,15 @@ const BUTTON_STYLE: Record<Action, string> = {
     "border border-slate-300 px-2 py-1 text-xs text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800",
 };
 
+type AdminStatus = "DRAFT" | "APPROVED" | "ARCHIVED";
+
 export default function AdminActions({
   id,
   status,
   disabled,
 }: {
   id: string;
-  status: PackageStatus;
+  status: AdminStatus;
   disabled?: boolean;
 }) {
   const [pending, start] = useTransition();
@@ -74,7 +75,7 @@ export default function AdminActions({
 
   const eligibility = useMemo(
     () => ({
-      approve: status === "DRAFT",
+      approve: status !== "APPROVED",
       reject: status === "APPROVED",
       archive: status !== "ARCHIVED",
     }),
@@ -145,8 +146,8 @@ export default function AdminActions({
             key={action}
             type="button"
             disabled={buttonDisabled}
-            onClick={() => {
-              if (requiresDialog) {
+            onClick={(event) => {
+              if (requiresDialog || event.metaKey || event.altKey) {
                 openDialog(action);
               } else {
                 start(async () => {

@@ -26,6 +26,7 @@ const currency = new Intl.NumberFormat("th-TH", {
 });
 
 const DB_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_DB_TIMEOUT ?? 2500);
+const ADMIN_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_ADMIN_TIMEOUT ?? Math.max(DB_TIMEOUT_MS * 2, 5000));
 
 function withTimeout<T>(promise: Promise<T>, fallback: T, label: string, timeout = DB_TIMEOUT_MS): Promise<T> {
   let timer: NodeJS.Timeout;
@@ -154,52 +155,62 @@ const ADMIN_SUMMARY_FALLBACK: AdminSummary = {
 };
 
 async function loadAdminSummary(): Promise<AdminSummary> {
-  const [draft, approved, carts, latestItem] = await Promise.all([
-    prisma.healthPackage.count({ where: { status: "DRAFT" } }),
-    prisma.healthPackage.count({ where: { status: "APPROVED" } }),
-    prisma.cart.count(),
-    prisma.cartItem.findFirst({
-      orderBy: { addedAt: "desc" },
-      select: {
-        addedAt: true,
-        quantity: true,
-        package: {
+  try {
+    const [draft, approved, carts, latestItems] = await prisma.$transaction(
+      [
+        prisma.healthPackage.count({ where: { status: "DRAFT" } }),
+        prisma.healthPackage.count({ where: { status: "APPROVED" } }),
+        prisma.cart.count(),
+        prisma.cartItem.findMany({
+          orderBy: { addedAt: "desc" },
           select: {
-            id: true,
-            slug: true,
-            title: true,
-            basePrice: true,
-            hospital: { select: { name: true } },
+            addedAt: true,
+            quantity: true,
+            package: {
+              select: {
+                id: true,
+                slug: true,
+                title: true,
+                basePrice: true,
+                hospital: { select: { name: true } },
+              },
+            },
+            cart: {
+              select: {
+                user: { select: { name: true, email: true } },
+              },
+            },
           },
-        },
-        cart: {
-          select: {
-            user: { select: { name: true, email: true } },
-          },
-        },
-      },
-    }),
-  ]);
+          take: 8,
+        }),
+      ],
+      { maxWait: 1_000, timeout: 3_000 }
+    );
 
-  const latestInterest = latestItem
-    ? {
-        packageId: latestItem.package?.id ?? latestItem.package?.slug ?? "",
-        packageSlug: latestItem.package?.slug ?? latestItem.package?.id ?? "",
-        packageTitle: latestItem.package?.title ?? "ไม่ระบุชื่อแพ็กเกจ",
-        hospitalName: latestItem.package?.hospital?.name ?? "ไม่ระบุโรงพยาบาล",
-        quantity: latestItem.quantity,
-        amount: (latestItem.package?.basePrice ?? 0) * latestItem.quantity,
-        userName: latestItem.cart?.user?.name ?? latestItem.cart?.user?.email ?? "ผู้ใช้ไม่ระบุชื่อ",
-        addedAt: latestItem.addedAt,
-      }
-    : null;
+    const latestItem = latestItems?.[0] ?? null;
+    const latestInterest = latestItem
+      ? {
+          packageId: latestItem.package?.id ?? latestItem.package?.slug ?? "",
+          packageSlug: latestItem.package?.slug ?? latestItem.package?.id ?? "",
+          packageTitle: latestItem.package?.title ?? "ไม่ระบุชื่อแพ็กเกจ",
+          hospitalName: latestItem.package?.hospital?.name ?? "ไม่ระบุโรงพยาบาล",
+          quantity: latestItem.quantity,
+          amount: (latestItem.package?.basePrice ?? 0) * latestItem.quantity,
+          userName: latestItem.cart?.user?.name ?? latestItem.cart?.user?.email ?? "ผู้ใช้ไม่ระบุชื่อ",
+          addedAt: latestItem.addedAt,
+        }
+      : null;
 
-  return {
-    pendingDrafts: draft,
-    approved,
-    totalActiveCarts: carts,
-    latestInterest,
-  } satisfies AdminSummary;
+    return {
+      pendingDrafts: draft,
+      approved,
+      totalActiveCarts: carts,
+      latestInterest,
+    } satisfies AdminSummary;
+  } catch (error) {
+    logger.warn("homepage.admin-summary.failed", { error: `${error}` });
+    return ADMIN_SUMMARY_FALLBACK;
+  }
 }
 
 type UserSummary = {
@@ -336,7 +347,7 @@ export default async function HomePage() {
     : Promise.resolve([]);
 
   const adminSummaryPromise = isAdmin
-    ? withTimeout(loadAdminSummary(), ADMIN_SUMMARY_FALLBACK, "homepage.admin-summary")
+    ? withTimeout(loadAdminSummary(), ADMIN_SUMMARY_FALLBACK, "homepage.admin-summary", ADMIN_TIMEOUT_MS)
     : Promise.resolve<AdminSummary | null>(null);
 
   const userSummaryPromise = userId && !isAdmin
