@@ -305,29 +305,35 @@ export default async function HomePage() {
   const isAdmin = userRole === "ADMIN" || userRole === "EDITOR";
   const isAuthenticated = Boolean(userId);
 
-  const topPackagesPromise = withTimeout(
-    prisma.healthPackage.findMany({
-      where: { status: "APPROVED" },
-      include: {
-        hospital: { select: { name: true, logoUrl: true } },
-        metrics: true,
-      },
-      orderBy: [{ metrics: { viewCount: "desc" } }, { updatedAt: "desc" }],
-      take: 6,
-    }),
-    [],
-    "homepage.top-packages"
-  );
+  const shouldLoadConsumerData = !isAdmin;
 
-  const hospitalsPromise = withTimeout(
-    prisma.hospital.findMany({
-      include: { _count: { select: { packages: true } } },
-      orderBy: { packages: { _count: "desc" } },
-      take: 6,
-    }),
-    [],
-    "homepage.hospitals"
-  );
+  const topPackagesPromise = shouldLoadConsumerData
+    ? withTimeout(
+        prisma.healthPackage.findMany({
+          where: { status: "APPROVED" },
+          include: {
+            hospital: { select: { name: true, logoUrl: true } },
+            metrics: true,
+          },
+          orderBy: [{ metrics: { viewCount: "desc" } }, { updatedAt: "desc" }],
+          take: 6,
+        }),
+        [],
+        "homepage.top-packages"
+      )
+    : Promise.resolve([]);
+
+  const hospitalsPromise = shouldLoadConsumerData
+    ? withTimeout(
+        prisma.hospital.findMany({
+          include: { _count: { select: { packages: true } } },
+          orderBy: { packages: { _count: "desc" } },
+          take: 6,
+        }),
+        [],
+        "homepage.hospitals"
+      )
+    : Promise.resolve([]);
 
   const adminSummaryPromise = isAdmin
     ? withTimeout(loadAdminSummary(), ADMIN_SUMMARY_FALLBACK, "homepage.admin-summary")
@@ -357,6 +363,7 @@ export default async function HomePage() {
     ? latestInterest.addedAt.toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })
     : "-";
   const userDisplayName = sessionUser?.name ?? sessionUser?.email ?? "คุณ";
+  const shouldShowConsumerSections = persona !== "admin";
 
   return (
     <main className="mx-auto max-w-6xl space-y-16 px-4 pb-16 pt-12">
@@ -638,7 +645,9 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section aria-labelledby="quick-filters" className="space-y-4">
+      {shouldShowConsumerSections && (
+        <>
+          <section aria-labelledby="quick-filters" className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 id="quick-filters" className="text-lg font-semibold text-slate-900 dark:text-white">ค้นหาเร็วตามหมวดที่ได้รับความนิยม</h2>
           <Link href="/packages" className="text-sm font-medium text-brand hover:underline">
@@ -657,9 +666,9 @@ export default async function HomePage() {
             </Link>
           ))}
         </div>
-      </section>
+          </section>
 
-      <section aria-labelledby="top-packages" className="space-y-6">
+          <section aria-labelledby="top-packages" className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 id="top-packages" className="text-lg font-semibold text-slate-900 dark:text-white">แพ็กเกจยอดนิยม</h2>
           <Link href="/packages?sort=updated" className="text-sm font-medium text-brand hover:underline">
@@ -711,9 +720,9 @@ export default async function HomePage() {
         ) : (
           <EmptyState title="ยังไม่มีข้อมูลแพ็กเกจ" hint="กำลังรอข้อมูลล่าสุดจากโรงพยาบาล" />
         )}
-      </section>
+          </section>
 
-      <section aria-labelledby="insurance-section" className="space-y-6">
+          <section aria-labelledby="insurance-section" className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 id="insurance-section" className="text-lg font-semibold text-slate-900 dark:text-white">แพ็กเกจ + ประกันสุขภาพ / อุบัติเหตุ</h2>
           <Link href="/insurance" className="text-sm font-medium text-brand hover:underline">
@@ -765,9 +774,9 @@ export default async function HomePage() {
             </article>
           ))}
         </div>
-      </section>
+          </section>
 
-      <section aria-labelledby="top-hospitals" className="space-y-6">
+          <section aria-labelledby="top-hospitals" className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 id="top-hospitals" className="text-lg font-semibold text-slate-900 dark:text-white">โรงพยาบาลพันธมิตร</h2>
           <Link href="/packages?sort=popular" className="text-sm font-medium text-brand hover:underline">
@@ -797,9 +806,9 @@ export default async function HomePage() {
         ) : (
           <EmptyState title="ยังไม่มีข้อมูลโรงพยาบาล" hint="กำลังจัดเตรียมข้อมูลล่าสุด" />
         )}
-      </section>
+          </section>
 
-      <section aria-labelledby="feature-highlights" className="space-y-6">
+          <section aria-labelledby="feature-highlights" className="space-y-6">
         <h2 id="feature-highlights" className="text-lg font-semibold text-slate-900 dark:text-white">ทำไมถึงควรใช้ HealthCheck CM Price?</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {featureHighlights.map((feature) => (
@@ -812,9 +821,9 @@ export default async function HomePage() {
             </div>
           ))}
         </div>
-      </section>
+          </section>
 
-      <section className="rounded-2xl bg-gradient-to-r from-brand via-brand/90 to-brand-dark px-6 py-10 text-center text-white shadow-lg">
+          <section className="rounded-2xl bg-gradient-to-r from-brand via-brand/90 to-brand-dark px-6 py-10 text-center text-white shadow-lg">
         <h2 className="text-2xl font-semibold">พร้อมเริ่มต้นดูแลสุขภาพและความคุ้มครองของคุณแล้วหรือยัง?</h2>
         <p className="mt-3 text-sm text-white/80">ค้นหาแพ็กเกจ ตรวจสอบโปรโมชั่น และรับคำแนะนำจากผู้เชี่ยวชาญฟรี</p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -825,7 +834,9 @@ export default async function HomePage() {
             ดูประกันสุขภาพและอุบัติเหตุ
           </Link>
         </div>
-      </section>
+          </section>
+        </>
+      )}
 
       <footer className="border-t border-slate-200 pt-8 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
