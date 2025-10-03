@@ -5,6 +5,7 @@ import { th } from "date-fns/locale";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
 import EmptyState from "@/components/EmptyState";
+import { Share2 } from "lucide-react";
 
 export const metadata = {
   title: "ลิงก์เปรียบเทียบของฉัน | HealthCheck CM Price",
@@ -31,6 +32,7 @@ export default async function CompareLibraryPage() {
         <EmptyState
           title="ยังไม่มีลิงก์เปรียบเทียบ"
           hint="เลือกแพ็กเกจ 2–4 รายการแล้วกดปุ่มแชร์ในหน้า Compare เพื่อบันทึกลิงก์"
+          icon={<Share2 className="h-6 w-6" aria-hidden />}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">

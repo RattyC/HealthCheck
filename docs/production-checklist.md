@@ -3,11 +3,11 @@
 Use this list to track the remaining polish before handing HealthCheck CM Price to users or stakeholders. Tick items as they are implemented.
 
 ## 1. UX & Presentation
-- [ ] Add hover/focus micro-interactions to buttons, cards, and tabs
-- [ ] Provide loading skeletons with shimmer states for package lists and detail panels
-- [ ] Craft friendly empty states with illustrations or icons per page (search, bookmarks, admin)
-- [ ] Ship dark mode with toggle persisted per user preference
-- [ ] Enable global command palette (`Cmd/Ctrl + K`) to jump to hospitals/packages/settings
+- [x] Add hover/focus micro-interactions to buttons, cards, and tabs
+- [x] Provide loading skeletons with shimmer states for package lists and detail panels
+- [x] Craft friendly empty states with illustrations or icons per page (search, bookmarks, admin)
+- [x] Ship dark mode with toggle persisted per user preference
+- [x] Enable global command palette (`Cmd/Ctrl + K`) to jump to hospitals/packages/settings
 - [ ] Ensure consistent spacing, typography scale, and color usage across layouts
 
 ## 2. User-Facing Features

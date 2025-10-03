@@ -38,6 +38,7 @@ model User {
   auditTrails               AuditTrail[]               @relation("AuditTrailActor")
   searchLogs                SearchLog[]
   compareSnapshots          CompareSnapshot[]
+  orders                    Order[]
   cart                      Cart?
   accounts                  Account[]
   sessions                  Session[]
@@ -86,6 +87,7 @@ model HealthPackage {
   metrics       PackageMetric?
   notifications NotificationSubscription[]
   cartItems     CartItem[]
+  orderItems    OrderItem[]
 
   @@index([hospitalId])
   @@index([basePrice])
@@ -266,9 +268,50 @@ model CartItem {
   packageId  String
   quantity   Int           @default(1)
   addedAt    DateTime      @default(now())
+  promotionCode  String?
+  promotionLabel String?
+  scheduledFor   DateTime?
 
   @@unique([cartId, packageId])
   @@index([packageId])
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  user            User?         @relation(fields: [userId], references: [id])
+  userId          String?
+  referenceCode   String        @unique
+  fullName        String
+  email           String
+  phone           String?
+  notes           String?
+  totalAmount     Int
+  status          OrderStatus   @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   String?
+  paymentIntentId String?
+  items           OrderItem[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status, paymentStatus])
+}
+
+model OrderItem {
+  id           String        @id @default(cuid())
+  order        Order         @relation(fields: [orderId], references: [id])
+  orderId      String
+  package      HealthPackage @relation(fields: [packageId], references: [id])
+  packageId    String
+  packageTitle String
+  hospitalName String?
+  unitPrice    Int
+  quantity     Int           @default(1)
+  subtotal     Int
+  promotionCode  String?
+  promotionLabel String?
+  scheduledFor   DateTime?
 }
 
 enum ViewEventType {
@@ -281,6 +324,21 @@ enum NotificationType {
   PRICE_DROP
   PACKAGE_APPROVED
   GENERAL
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  AWAITING_CONFIRMATION
+  PAID
+  FAILED
+  REFUNDED
 }
 
 enum AuditAction {

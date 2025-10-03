@@ -4,10 +4,11 @@ import PackageCard from "@/components/PackageCard";
 import Pagination from "@/components/Pagination";
 import EmptyState from "@/components/EmptyState";
 import SaveSearchButton from "@/components/SaveSearchButton";
+import { filterFallbackPackages, getFallbackHospitalSummaries } from "@/lib/fallback-data";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { packageSearchSchema, type PackageSearchInput } from "@/lib/validators";
-import { Search } from "lucide-react";
+import { AlertTriangle, Info, PackageSearch } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import { logger } from "@/lib/logger";
 
@@ -187,7 +188,11 @@ export default async function PackagesPage({
     return (
       <section className="space-y-4">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">แพ็กเกจทั้งหมด</h1>
-        <EmptyState title="พารามิเตอร์ไม่ถูกต้อง" hint="รีเฟรชหน้าหรือปรับฟิลเตอร์ใหม่อีกครั้ง" />
+        <EmptyState
+          title="พารามิเตอร์ไม่ถูกต้อง"
+          hint="รีเฟรชหน้าหรือปรับฟิลเตอร์ใหม่อีกครั้ง"
+          icon={<AlertTriangle className="h-6 w-6" aria-hidden />}
+        />
       </section>
     );
   }
@@ -197,6 +202,7 @@ export default async function PackagesPage({
   let hospitals: HospitalOption[] = [];
   let total = 0;
   let items: PackageWithMeta[] = [];
+  let usingFallback = false;
 
   const where = buildWhereClause(input);
 
@@ -241,47 +247,36 @@ export default async function PackagesPage({
     items = [];
   }
 
+  const shouldUseFallback = items.length === 0 && total === 0 && hospitals.length === 0;
+
+  if (shouldUseFallback) {
+    usingFallback = true;
+    const fallbackHospitals = getFallbackHospitalSummaries();
+    hospitals = fallbackHospitals.map((hospital) => ({
+      value: hospital.id,
+      label: `${hospital.name} (${hospital.packageCount})`,
+    }));
+
+    const fallbackPackages = filterFallbackPackages(input);
+    total = fallbackPackages.length;
+    const paginated = fallbackPackages.slice(skip, skip + input.limit);
+    items = paginated.map((pkg) => ({
+      id: pkg.id,
+      title: pkg.title,
+      slug: pkg.slug,
+      basePrice: pkg.basePrice,
+      gender: pkg.gender,
+      category: pkg.category,
+      priceNote: pkg.priceNote ?? null,
+      updatedAt: pkg.updatedAt,
+      hospital: { id: pkg.hospitalId, name: pkg.hospitalName, logoUrl: pkg.hospitalLogoUrl },
+      _count: { includes: pkg.includes.length },
+    } satisfies PackageWithMeta));
+  }
+
   const bestValueId = getBestValueId(items);
-  const showMock = items.length === 0 && hospitals.length === 0;
   const serializedParams = buildSerializableParams(input);
-  const mockItems: PackageWithMeta[] = [
-    {
-      id: "demo-1",
-      title: "Basic Health Check (Male)",
-      slug: "demo-1",
-      basePrice: 1990,
-      gender: "male",
-      category: ["basic"],
-      priceNote: null,
-      updatedAt: new Date(),
-      hospital: { id: "h1", name: "Demo Hospital", logoUrl: null },
-      _count: { includes: 8 },
-    },
-    {
-      id: "demo-2",
-      title: "Basic Health Check (Female)",
-      slug: "demo-2",
-      basePrice: 2090,
-      gender: "female",
-      category: ["basic"],
-      priceNote: null,
-      updatedAt: new Date(),
-      hospital: { id: "h1", name: "Demo Hospital", logoUrl: null },
-      _count: { includes: 8 },
-    },
-    {
-      id: "demo-3",
-      title: "Premium Checkup",
-      slug: "demo-3",
-      basePrice: 4990,
-      gender: "any",
-      category: ["premium"],
-      priceNote: null,
-      updatedAt: new Date(),
-      hospital: { id: "h1", name: "Demo Hospital", logoUrl: null },
-      _count: { includes: 15 },
-    },
-  ];
+  const shouldShowPagination = total > input.limit;
 
   return (
     <section className="space-y-4">
@@ -290,23 +285,21 @@ export default async function PackagesPage({
         <FilterBar hospitals={hospitals} />
         <SaveSearchButton params={serializedParams} />
       </div>
+      {usingFallback && (
+        <div className="flex items-start gap-2 rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 shadow-sm dark:border-amber-500/50 dark:bg-amber-900/20 dark:text-amber-100">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <p>
+            แสดงข้อมูลตัวอย่างจากชุดแพ็กเกจมาตรฐาน เนื่องจากยังไม่สามารถเชื่อมต่อฐานข้อมูลได้ในขณะนี้
+          </p>
+        </div>
+      )}
       {items.length === 0 ? (
         <>
           <EmptyState
             title="ไม่พบผลลัพธ์"
             hint="ลองปรับช่วงราคา เลือกโรงพยาบาลอื่น หรือเคลียร์ตัวกรองเพื่อดูตัวเลือกมากขึ้น"
-            icon={<Search size={20} />}
+            icon={<PackageSearch className="h-6 w-6" aria-hidden />}
           />
-          {showMock && (
-            <div className="space-y-2">
-              <div className="mt-2 text-sm text-gray-600">ตัวอย่าง (mock) เพื่อดูหน้าตา:</div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {mockItems.map((p) => (
-                  <PackageCard key={p.id} pkg={p} bestValue={false} />
-                ))}
-              </div>
-            </div>
-          )}
         </>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -315,7 +308,7 @@ export default async function PackagesPage({
           ))}
         </div>
       )}
-      {!showMock && <Pagination page={input.page} limit={input.limit} total={total} />}
+      {shouldShowPagination && <Pagination page={input.page} limit={input.limit} total={total} />}
     </section>
   );
 }

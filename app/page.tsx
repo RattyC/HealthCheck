@@ -11,7 +11,12 @@ import {
   ShoppingCart,
   Bookmark,
   Clock,
+  Package,
+  Building2,
+  Info,
 } from "lucide-react";
+import { getTopFallbackPackages, getFallbackHospitalSummaries } from "@/lib/fallback-data";
+import { getInsuranceBundles } from "@/lib/insurance-data";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import EmptyState from "@/components/EmptyState";
@@ -83,53 +88,7 @@ const featureHighlights = [
   },
 ];
 
-const insuranceBundles = [
-  {
-    id: "health-protect",
-    name: "Health Protect Plus",
-    price: 890,
-    coverage: "คุ้มครองค่ารักษาพยาบาล 200,000 บาท/ปี + ตรวจสุขภาพประจำปี",
-    partner: "Allianz Ayudhya",
-    highlight: "ลด 10% เมื่อซื้อคู่กับแพ็กเกจ Premium Checkup",
-    idealFor: "พนักงานวัยทำงานที่ต้องการความคุ้มครอง OPD/IPD พร้อมตรวจสุขภาพทุกปี",
-    responseTimeHours: 24,
-    perks: [
-      "มีผู้ช่วยเคลม 24 ชั่วโมงผ่าน LINE OA",
-      "วิเคราะห์ผลตรวจโดยแพทย์เวชศาสตร์ครอบครัว",
-      "ได้รับคูปองตรวจเลือดเพิ่มเติมฟรี 1 รายการ",
-    ],
-  },
-  {
-    id: "senior-care",
-    name: "Senior Care Combo",
-    price: 1_290,
-    coverage: "ประกันอุบัติเหตุ + ตรวจสุขภาพผู้สูงอายุ (เฉพาะ 55+)",
-    partner: "เมืองไทยประกันภัย",
-    highlight: "แนะนำสำหรับครอบครัวดูแลผู้สูงวัย",
-    idealFor: "ผู้ดูแลและครอบครัวที่ต้องการติดตามสุขภาพผู้สูงอายุแบบใกล้ชิด",
-    responseTimeHours: 12,
-    perks: [
-      "บริการรับ-ส่งถึงบ้านในเขตตัวเมือง",
-      "โทรติดตามอาการภายใน 48 ชั่วโมงหลังตรวจ",
-      "สิทธิ์เบิกค่ารักษาอุบัติเหตุสูงสุด 300,000 บาท",
-    ],
-  },
-  {
-    id: "family-shield",
-    name: "Family Shield Plan",
-    price: 1_590,
-    coverage: "ตรวจสุขภาพผู้ปกครอง + คุ้มครองลูกเล็กจากอุบัติเหตุ",
-    partner: "AXA",
-    highlight: "แบ่งจ่าย 0% 6 เดือน 💳",
-    idealFor: "ครอบครัวที่ต้องการดูแลทุกคนในบ้านด้วยแพ็กเกจเดียว",
-    responseTimeHours: 6,
-    perks: [
-      "ช่องทางด่วนแจ้งเคลมสำหรับเด็ก",
-      "เจ้าหน้าที่ช่วยประสานโรงพยาบาล 7 วัน/สัปดาห์",
-      "ฟรีคูปองวัคซีนไข้หวัดใหญ่สำหรับเด็ก 1 เข็ม",
-    ],
-  },
-];
+const insuranceBundles = getInsuranceBundles();
 
 type AdminSummary = {
   pendingDrafts: number;
@@ -156,36 +115,33 @@ const ADMIN_SUMMARY_FALLBACK: AdminSummary = {
 
 async function loadAdminSummary(): Promise<AdminSummary> {
   try {
-    const [draft, approved, carts, latestItems] = await prisma.$transaction(
-      [
-        prisma.healthPackage.count({ where: { status: "DRAFT" } }),
-        prisma.healthPackage.count({ where: { status: "APPROVED" } }),
-        prisma.cart.count(),
-        prisma.cartItem.findMany({
-          orderBy: { addedAt: "desc" },
-          select: {
-            addedAt: true,
-            quantity: true,
-            package: {
-              select: {
-                id: true,
-                slug: true,
-                title: true,
-                basePrice: true,
-                hospital: { select: { name: true } },
-              },
-            },
-            cart: {
-              select: {
-                user: { select: { name: true, email: true } },
-              },
+    const [draft, approved, carts, latestItems] = await prisma.$transaction([
+      prisma.healthPackage.count({ where: { status: "DRAFT" } }),
+      prisma.healthPackage.count({ where: { status: "APPROVED" } }),
+      prisma.cart.count(),
+      prisma.cartItem.findMany({
+        orderBy: { addedAt: "desc" },
+        select: {
+          addedAt: true,
+          quantity: true,
+          package: {
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              basePrice: true,
+              hospital: { select: { name: true } },
             },
           },
-          take: 8,
-        }),
-      ],
-      { maxWait: 1_000, timeout: 3_000 }
-    );
+          cart: {
+            select: {
+              user: { select: { name: true, email: true } },
+            },
+          },
+        },
+        take: 8,
+      }),
+    ]);
 
     const latestItem = latestItems?.[0] ?? null;
     const latestInterest = latestItem
@@ -310,7 +266,7 @@ function HeroSearch() {
 
 export default async function HomePage() {
   const session = await getSession();
-  const sessionUser = (session?.user ?? null) as { id?: string; role?: string; name?: string | null } | null;
+  const sessionUser = (session?.user ?? null) as { id?: string; role?: string; name?: string | null; email?: string | null } | null;
   const userId = typeof sessionUser?.id === "string" ? sessionUser.id : null;
   const userRole = typeof sessionUser?.role === "string" ? sessionUser.role : null;
   const isAdmin = userRole === "ADMIN" || userRole === "EDITOR";
@@ -361,8 +317,77 @@ export default async function HomePage() {
     userSummaryPromise,
   ]);
 
-  const hasPackages = topPackages.length > 0;
-  const hasHospitals = hospitals.length > 0;
+  type FeaturedPackage = {
+    id: string;
+    slug: string;
+    title: string;
+    basePrice: number;
+    updatedAt: Date;
+    hospital: { name: string; logoUrl: string | null } | null;
+    metrics: { viewCount?: number | null } | null;
+  };
+
+  type HighlightHospital = {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+    district: string | null;
+    packageCount: number;
+  };
+
+  const fetchedTopPackages: FeaturedPackage[] = shouldLoadConsumerData
+    ? topPackages.map((pkg) => ({
+        id: pkg.id,
+        slug: pkg.slug,
+        title: pkg.title,
+        basePrice: pkg.basePrice,
+        updatedAt: pkg.updatedAt,
+        hospital: pkg.hospital ? { name: pkg.hospital.name, logoUrl: pkg.hospital.logoUrl ?? null } : null,
+        metrics: pkg.metrics ? { viewCount: pkg.metrics.viewCount } : null,
+      }))
+    : [];
+
+  const fetchedHospitals: HighlightHospital[] = shouldLoadConsumerData
+    ? hospitals.map((hospital) => ({
+        id: hospital.id,
+        name: hospital.name,
+        logoUrl: hospital.logoUrl ?? null,
+        district: hospital.district ?? null,
+        packageCount: hospital._count?.packages ?? 0,
+      }))
+    : [];
+
+  let resolvedTopPackages = fetchedTopPackages;
+  let resolvedHospitals = fetchedHospitals;
+  let fallbackPackagesUsed = false;
+  let fallbackHospitalsUsed = false;
+
+  if (shouldLoadConsumerData && resolvedTopPackages.length === 0) {
+    resolvedTopPackages = getTopFallbackPackages().map((pkg) => ({
+      id: pkg.id,
+      slug: pkg.slug,
+      title: pkg.title,
+      basePrice: pkg.basePrice,
+      updatedAt: pkg.updatedAt,
+      hospital: { name: pkg.hospitalName, logoUrl: pkg.hospitalLogoUrl },
+      metrics: { viewCount: pkg.metrics.viewCount },
+    }));
+    fallbackPackagesUsed = resolvedTopPackages.length > 0;
+  }
+
+  if (shouldLoadConsumerData && resolvedHospitals.length === 0) {
+    resolvedHospitals = getFallbackHospitalSummaries().map((hospital) => ({
+      id: hospital.id,
+      name: hospital.name,
+      logoUrl: hospital.logoUrl,
+      district: hospital.district,
+      packageCount: hospital.packageCount,
+    }));
+    fallbackHospitalsUsed = resolvedHospitals.length > 0;
+  }
+
+  const hasPackages = resolvedTopPackages.length > 0;
+  const hasHospitals = resolvedHospitals.length > 0;
   const persona = isAdmin ? "admin" : isAuthenticated ? "user" : "guest";
   const resolvedAdminSummary = isAdmin ? adminSummary ?? ADMIN_SUMMARY_FALLBACK : null;
   const resolvedUserSummary = persona === "user" ? userSummary ?? USER_SUMMARY_FALLBACK : null;
@@ -375,6 +400,7 @@ export default async function HomePage() {
     : "-";
   const userDisplayName = sessionUser?.name ?? sessionUser?.email ?? "คุณ";
   const shouldShowConsumerSections = persona !== "admin";
+  const usingFallbackData = shouldShowConsumerSections && (fallbackPackagesUsed || fallbackHospitalsUsed);
 
   return (
     <main className="mx-auto max-w-6xl space-y-16 px-4 pb-16 pt-12">
@@ -419,7 +445,7 @@ export default async function HomePage() {
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/admin"
-                className="inline-flex items-center justify-center rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark"
+                className="interactive-button inline-flex items-center justify-center rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
               >
                 เปิดแดชบอร์ดแอดมิน
               </Link>
@@ -658,6 +684,15 @@ export default async function HomePage() {
 
       {shouldShowConsumerSections && (
         <>
+          {usingFallbackData && (
+            <div className="flex items-start gap-2 rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 shadow-sm dark:border-amber-500/50 dark:bg-amber-900/20 dark:text-amber-100">
+              <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              <p>
+                กำลังแสดงข้อมูลตัวอย่างบางส่วนแทนข้อมูลจริงระหว่างรอการเชื่อมต่อฐานข้อมูล เพื่อให้คุณสำรวจหน้าร้านได้ต่อเนื่อง
+              </p>
+            </div>
+          )}
+
           <section aria-labelledby="quick-filters" className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 id="quick-filters" className="text-lg font-semibold text-slate-900 dark:text-white">ค้นหาเร็วตามหมวดที่ได้รับความนิยม</h2>
@@ -670,7 +705,7 @@ export default async function HomePage() {
             <Link
               key={filter.href}
               href={filter.href}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition hover:border-brand hover:text-brand dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+              className="interactive-chip inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
             >
               <span aria-hidden>{filter.emoji}</span>
               {filter.label}
@@ -688,7 +723,7 @@ export default async function HomePage() {
         </div>
         {hasPackages ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {topPackages.map((pkg) => (
+            {resolvedTopPackages.map((pkg) => (
               <article key={pkg.id} className="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -714,13 +749,13 @@ export default async function HomePage() {
                 <div className="mt-4 flex items-center gap-2 text-sm">
                   <Link
                     href={`/packages/${pkg.slug}`}
-                    className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="interactive-button inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                   >
                     ดูรายละเอียด
                   </Link>
                   <Link
                     href={`/compare?add=${pkg.id}`}
-                    className="inline-flex items-center justify-center rounded-full border border-brand px-4 py-2 text-sm font-medium text-brand transition hover:bg-brand hover:text-white"
+                    className="interactive-button inline-flex items-center justify-center rounded-full border border-brand px-4 py-2 text-sm font-medium text-brand hover:bg-brand hover:text-white"
                   >
                     เปรียบเทียบ
                   </Link>
@@ -729,7 +764,11 @@ export default async function HomePage() {
             ))}
           </div>
         ) : (
-          <EmptyState title="ยังไม่มีข้อมูลแพ็กเกจ" hint="กำลังรอข้อมูลล่าสุดจากโรงพยาบาล" />
+          <EmptyState
+            title="ยังไม่มีข้อมูลแพ็กเกจ"
+            hint="กำลังรอข้อมูลล่าสุดจากโรงพยาบาล"
+            icon={<Package className="h-6 w-6" aria-hidden />}
+          />
         )}
           </section>
 
@@ -796,7 +835,7 @@ export default async function HomePage() {
         </div>
         {hasHospitals ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {hospitals.map((hospital) => (
+            {resolvedHospitals.map((hospital) => (
               <article key={hospital.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-200">
                   {(hospital.logoUrl && (
@@ -806,7 +845,7 @@ export default async function HomePage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-medium text-slate-900 dark:text-white">{hospital.name}</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">มีแพ็กเกจ {hospital._count.packages} รายการ</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">มีแพ็กเกจ {hospital.packageCount} รายการ</p>
                 </div>
                 <Link href={`/packages?hospitalId=${hospital.id}`} className="text-sm font-medium text-brand hover:underline">
                   ดูแพ็กเกจ
@@ -815,7 +854,11 @@ export default async function HomePage() {
             ))}
           </div>
         ) : (
-          <EmptyState title="ยังไม่มีข้อมูลโรงพยาบาล" hint="กำลังจัดเตรียมข้อมูลล่าสุด" />
+          <EmptyState
+            title="ยังไม่มีข้อมูลโรงพยาบาล"
+            hint="กำลังจัดเตรียมข้อมูลล่าสุด"
+            icon={<Building2 className="h-6 w-6" aria-hidden />}
+          />
         )}
           </section>
 
@@ -841,7 +884,7 @@ export default async function HomePage() {
           <Link href="/packages" className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand shadow hover:bg-slate-100">
             เริ่มค้นหาแพ็กเกจสุขภาพ
           </Link>
-          <Link href="/insurance" className="inline-flex items-center justify-center rounded-full border border-white px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">
+          <Link href="/insurance" className="interactive-button inline-flex items-center justify-center rounded-full border border-white px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">
             ดูประกันสุขภาพและอุบัติเหตุ
           </Link>
         </div>

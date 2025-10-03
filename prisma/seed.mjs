@@ -765,12 +765,10 @@ async function seedUserContent(userMap, packageMap) {
     {
       slug: "demo-heart-vs-basic",
       packageSlugs: ["bkk-heart-protect", "cmr-basic-male"],
-      note: "เปรียบเทียบแพ็กเกจหัวใจและตรวจพื้นฐาน",
     },
     {
       slug: "demo-family-packages",
       packageSlugs: ["bkk-family-combo", "mcc-travel-asia", "srn-kids-focus"],
-      note: "ตัวเลือกสำหรับครอบครัวและเด็ก",
     },
   ];
   for (const snapshot of snapshotConfigs) {
@@ -780,15 +778,13 @@ async function seedUserContent(userMap, packageMap) {
       where: { slug: snapshot.slug },
       update: {
         packageIds,
-        userId: demoUser.id,
-        note: snapshot.note,
+        user: { connect: { id: demoUser.id } },
         expiresAt: toDate("2024-12-01T00:00:00Z"),
       },
       create: {
         slug: snapshot.slug,
         packageIds,
-        userId: demoUser.id,
-        note: snapshot.note,
+        user: { connect: { id: demoUser.id } },
         expiresAt: toDate("2024-12-01T00:00:00Z"),
       },
     });

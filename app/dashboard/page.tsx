@@ -9,6 +9,7 @@ import SavedSearchList from "@/components/SavedSearchList";
 import EmptyState from "@/components/EmptyState";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import { Bookmark, ListChecks } from "lucide-react";
 import { getSession, type SessionLike } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -463,6 +464,7 @@ export default async function DashboardPage() {
               <EmptyState
                 title="ยังไม่มีบุ๊กมาร์ก"
                 hint="เริ่มสำรวจแพ็กเกจและกดบันทึกเพื่อเรียกดูได้จากที่นี่"
+                icon={<Bookmark className="h-6 w-6" aria-hidden />}
               />
             ) : (
               <ul className="grid gap-3 md:grid-cols-2">
@@ -531,7 +533,11 @@ export default async function DashboardPage() {
                 <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Saved searches</h3>
                   {savedSearches.length === 0 ? (
-                    <EmptyState title="ยังไม่มีการบันทึกการค้นหา" hint="เลือกตัวกรองแล้วกดปุ่มบันทึกบนหน้าค้นหาเพื่อแสดงที่นี่" />
+                    <EmptyState
+                    title="ยังไม่มีการบันทึกการค้นหา"
+                    hint="เลือกตัวกรองแล้วกดปุ่มบันทึกบนหน้าค้นหาเพื่อแสดงที่นี่"
+                    icon={<ListChecks className="h-6 w-6" aria-hidden />}
+                  />
                   ) : (
                     <div className="mt-3">
                       <SavedSearchList items={savedSearches} />

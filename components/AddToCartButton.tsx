@@ -6,12 +6,28 @@ import { useRouter } from "next/navigation";
 import { ShoppingCart, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
 
+type PromotionPayload = {
+  code: string;
+  label: string;
+};
+
 type Props = {
   packageId: string;
   initialInCart: boolean;
+  promotion?: PromotionPayload | null;
+  scheduledFor?: string | null;
+  requiresSchedule?: boolean;
+  requiresPromotion?: boolean;
 };
 
-export default function AddToCartButton({ packageId, initialInCart }: Props) {
+export default function AddToCartButton({
+  packageId,
+  initialInCart,
+  promotion,
+  scheduledFor,
+  requiresSchedule,
+  requiresPromotion,
+}: Props) {
   const { data: session } = useSession();
   const router = useRouter();
   const { push } = useToast();
@@ -27,12 +43,24 @@ export default function AddToCartButton({ packageId, initialInCart }: Props) {
       router.push(`/auth/sign-in?callbackUrl=/packages/${packageId}`);
       return;
     }
+    if (requiresPromotion && !promotion) {
+      push({ title: "กรุณาเลือกโปรโมชั่นก่อนเพิ่มลงตะกร้า", variant: "info" });
+      return;
+    }
+    if (requiresSchedule && !scheduledFor) {
+      push({ title: "กรุณาเลือกวันที่ต้องการเข้ารับบริการ", variant: "info" });
+      return;
+    }
     setLoading(true);
     try {
       const response = await fetch("/api/v1/cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageId }),
+        body: JSON.stringify({
+          packageId,
+          promotion: promotion ?? undefined,
+          scheduledFor: scheduledFor ?? undefined,
+        }),
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));

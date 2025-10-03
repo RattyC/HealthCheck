@@ -5,6 +5,7 @@ import AdminActions from "@/components/AdminActions";
 import AdminPackagesToolbar from "@/components/AdminPackagesToolbar";
 import Pagination from "@/components/Pagination";
 import EmptyState from "@/components/EmptyState";
+import { FileSearch } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { adminPackageQuerySchema } from "@/lib/validators";
 import { requireRole } from "@/lib/auth-guard";
@@ -93,7 +94,11 @@ export default async function AdminPackages({
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white">จัดการแพ็กเกจ</h1>
       <AdminPackagesToolbar total={total} defaults={defaults} />
       {items.length === 0 ? (
-        <EmptyState title="ไม่พบแพ็กเกจ" hint="ลองค้นด้วยคำหลักอื่นหรือเปลี่ยนตัวกรอง" />
+        <EmptyState
+        title="ไม่พบแพ็กเกจ"
+        hint="ลองค้นด้วยคำหลักอื่นหรือเปลี่ยนตัวกรอง"
+        icon={<FileSearch className="h-6 w-6" aria-hidden />}
+      />
       ) : (
         <div className="overflow-x-auto rounded-md border border-slate-200 bg-white shadow-sm shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-900 dark:shadow-none">
           <table className="min-w-full text-sm">

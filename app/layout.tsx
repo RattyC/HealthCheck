@@ -61,31 +61,34 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const session = await getSession();
   const userRole = (session?.user as { role?: string })?.role;
   const isAdmin = userRole === "ADMIN" || userRole === "EDITOR";
+  const isAuthenticated = Boolean(session?.user);
+  const navLinks = [
+    { href: "/packages", label: "แพ็กเกจสุขภาพ" },
+    { href: "/insurance", label: "ประกันสุขภาพ" },
+    { href: "/cart", label: "ตะกร้า" },
+  ];
+  if (isAuthenticated) {
+    navLinks.push({ href: "/dashboard", label: "บัญชีของฉัน" });
+  }
+  if (isAdmin) {
+    navLinks.push({ href: "/admin", label: "ศูนย์ผู้ดูแล" });
+  }
   return (
     <html lang="th" suppressHydrationWarning>
       <body className="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-150 dark:bg-slate-950 dark:text-slate-100">
         <AppProviders session={session}>
             <header className="border-b border-slate-200 bg-white/60 backdrop-blur dark:border-slate-800 dark:bg-slate-950/60">
               <div className="container-page flex h-14 items-center justify-between gap-4">
-                <Link href="/" className="font-semibold tracking-tight hover:text-brand">
+                <Link href="/" className="interactive-link font-semibold tracking-tight text-slate-900 dark:text-white">
                   HealthCheck CM Price
                 </Link>
                 <div className="flex items-center gap-3">
-                  <nav className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-300">
-                    <Link href="/dashboard" className="hover:text-slate-900 dark:hover:text-white">
-                      แดชบอร์ด
-                    </Link>
-                    <Link href="/packages" className="hover:text-slate-900 dark:hover:text-white">
-                      แพ็กเกจ
-                    </Link>
-                    <Link href="/cart" className="hover:text-slate-900 dark:hover:text-white">
-                      ตะกร้า
-                    </Link>
-                    {isAdmin ? (
-                      <Link href="/admin" className="hover:text-slate-900 dark:hover:text-white">
-                        แอดมิน
+                  <nav className="flex flex-wrap items-center gap-3 text-sm">
+                    {navLinks.map((link) => (
+                      <Link key={link.href} href={link.href} className="interactive-link">
+                        {link.label}
                       </Link>
-                    ) : null}
+                    ))}
                   </nav>
                   <div className="flex items-center gap-2">
                     <ThemeToggle />
