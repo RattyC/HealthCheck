@@ -9,6 +9,7 @@ import SavedSearchList from "@/components/SavedSearchList";
 import EmptyState from "@/components/EmptyState";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import { DB_TIMEOUT_MS } from "@/lib/runtime-config";
 import { Bookmark, ListChecks } from "lucide-react";
 import { getSession, type SessionLike } from "@/lib/session";
 
@@ -55,8 +56,6 @@ const navItems = [
   { id: "notifications", label: "แจ้งเตือน", icon: "🔔" },
   { id: "settings", label: "ตั้งค่า", icon: "⚙️" },
 ];
-
-const DB_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_DB_TIMEOUT ?? 2500);
 
 function withTimeout<T>(promise: Promise<T>, fallback: T, label: string, timeout = DB_TIMEOUT_MS): Promise<T> {
   let timer: NodeJS.Timeout;

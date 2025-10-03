@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { getTopFallbackPackages, getFallbackHospitalSummaries } from "@/lib/fallback-data";
 import { getInsuranceBundles } from "@/lib/insurance-data";
+import { ADMIN_TIMEOUT_MS, DB_TIMEOUT_MS } from "@/lib/runtime-config";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import EmptyState from "@/components/EmptyState";
@@ -29,9 +30,6 @@ const currency = new Intl.NumberFormat("th-TH", {
   currency: "THB",
   maximumFractionDigits: 0,
 });
-
-const DB_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_DB_TIMEOUT ?? 2500);
-const ADMIN_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_ADMIN_TIMEOUT ?? Math.max(DB_TIMEOUT_MS * 2, 5000));
 
 function withTimeout<T>(promise: Promise<T>, fallback: T, label: string, timeout = DB_TIMEOUT_MS): Promise<T> {
   let timer: NodeJS.Timeout;

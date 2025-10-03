@@ -11,10 +11,9 @@ import { packageSearchSchema, type PackageSearchInput } from "@/lib/validators";
 import { AlertTriangle, Info, PackageSearch } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import { logger } from "@/lib/logger";
+import { DB_TIMEOUT_MS } from "@/lib/runtime-config";
 
 export const revalidate = 60;
-
-const DB_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_DB_TIMEOUT ?? 2500);
 
 function withTimeout<T>(promise: Promise<T>, fallback: T, label: string, timeout = DB_TIMEOUT_MS): Promise<T> {
   let timer: NodeJS.Timeout;
