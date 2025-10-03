@@ -47,6 +47,8 @@ Use this list to track the remaining polish before handing HealthCheck CM Price 
 - [ ] Record 2–3 minute demo walkthrough (search → compare → admin approve)
 - [ ] Produce feature roadmap and future enhancements slide
 - [ ] Describe backup & recovery approach for database and assets
+- [ ] Configure GitHub Action secrets (`SSH_PRIVATE_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH`, optional `DEPLOY_PORT`) for automated build + deploy
+- [ ] Verify CI workflow (`.github/workflows/ci.yml`) passes on pull requests and deploy workflow succeeds on `main`
 
 ## 7. Testing & QA
 - [ ] Smoke-test flows on mobile, tablet, and desktop breakpoints

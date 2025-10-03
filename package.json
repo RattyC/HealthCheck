@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "prebuild": "npm run prisma:generate",
-    "dev": "next dev",
+    "dev": "bash scripts/dev.sh",
+    "dev:remote": "NODE_ENV=development APP_ENV=development NEXT_PUBLIC_DB_TIMEOUT=1200 NEXT_PUBLIC_ADMIN_TIMEOUT=3000 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
