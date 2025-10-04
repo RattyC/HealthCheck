@@ -1,22 +1,131 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import termsRaw from "@/docs/legal/terms-of-service.md?raw";
 
 export const metadata: Metadata = {
   title: "ข้อกำหนดการใช้บริการ | HealthCheck CM Price",
   description: "ข้อกำหนดการใช้บริการของ HealthCheck CM Price สำหรับผู้ใช้งานในประเทศไทย",
 };
 
+const sections = [
+  {
+    title: "1. การยอมรับเงื่อนไข",
+    body: [
+      "เมื่อเข้าใช้บริการของเรา หมายความว่าคุณยอมรับข้อกำหนดทั้งหมด หากไม่ยอมรับกรุณาหยุดใช้งาน",
+      "ผู้ใช้ต้องมีอายุอย่างน้อย 18 ปีหรือได้รับความยินยอมจากผู้ปกครอง",
+    ],
+  },
+  {
+    title: "2. ลักษณะบริการ",
+    body: [
+      "เรารวบรวมแพ็กเกจตรวจสุขภาพจากโรงพยาบาลในเชียงใหม่เพื่อการเปรียบเทียบและจัดตารางตรวจ",
+      "HealthCheck CM Price ไม่ใช่ผู้ให้บริการทางการแพทย์ และไม่รับประกันผลการรักษา",
+    ],
+  },
+  {
+    title: "3. บัญชีผู้ใช้",
+    body: [
+      "คุณต้องให้ข้อมูลที่ถูกต้องและเก็บรักษารหัสผ่านอย่างปลอดภัย",
+      "ผู้ใช้รับผิดชอบกิจกรรมทั้งหมดที่เกิดขึ้นภายใต้บัญชีของตน",
+    ],
+  },
+  {
+    title: "4. ความรับผิดชอบของผู้ใช้",
+    body: [
+      "ห้ามใช้บริการเพื่อการทุจริตหรือผิดกฎหมาย",
+      "ห้ามพยายามรบกวนระบบหรือดึงข้อมูลจำนวนมากโดยไม่ได้รับอนุญาต",
+    ],
+  },
+  {
+    title: "5. ข้อมูลแพ็กเกจและการจอง",
+    body: [
+      "ราคาหรือรายละเอียดอาจเปลี่ยนแปลงได้ตลอดเวลา ควรยืนยันกับโรงพยาบาลก่อน",
+      "เมื่อกรอกแบบฟอร์มติดต่อ เราอาจส่งข้อมูลให้โรงพยาบาลหรือทีมคอนเซียร์จ",
+    ],
+  },
+  {
+    title: "6. ชำระเงิน",
+    body: [
+      "การชำระเงินดำเนินการโดยตรงกับโรงพยาบาลหรือพันธมิตรประกันตามช่องทางที่กำหนด",
+      "HealthCheck CM Price ไม่จัดเก็บข้อมูลบัตรเครดิต",
+    ],
+  },
+  {
+    title: "7. ทรัพย์สินทางปัญญา",
+    body: [
+      "เนื้อหา โลโก้ และซอฟต์แวร์เป็นทรัพย์สินของเรา ห้ามคัดลอกหรือดัดแปลงโดยไม่ได้รับอนุญาต",
+    ],
+  },
+  {
+    title: "8. ข้อมูลผู้ใช้",
+    body: [
+      "หากคุณส่งรีวิวหรือข้อเสนอแนะ คุณอนุญาตให้เรานำไปใช้เพื่อพัฒนาบริการ",
+    ],
+  },
+  {
+    title: "9. ความเป็นส่วนตัว",
+    body: [
+      "การเก็บและใช้ข้อมูลส่วนบุคคลอยู่ภายใต้นโยบายความเป็นส่วนตัว",
+      "อ่านเพิ่มเติมได้ที่ หน้าประกาศความเป็นส่วนตัว",
+    ],
+  },
+  {
+    title: "10. การจำกัดความรับผิด",
+    body: [
+      "เราไม่รับผิดชอบต่อความเสียหายทางอ้อมหรือผลสืบเนื่องจากการใช้บริการ",
+    ],
+  },
+  {
+    title: "11. การสิ้นสุดบริการ",
+    body: [
+      "เราสามารถระงับหรือยุติการให้บริการได้ หากพบว่ามีการละเมิดข้อกำหนด",
+    ],
+  },
+  {
+    title: "12. การเปลี่ยนแปลงเงื่อนไข",
+    body: [
+      "เราสามารถปรับปรุงข้อกำหนดได้ตามความเหมาะสม โดยประกาศบนเว็บไซต์",
+      "การใช้บริการต่อหลังจากมีการประกาศถือว่ายอมรับข้อกำหนดที่ปรับปรุงแล้ว",
+    ],
+  },
+  {
+    title: "13. กฎหมายที่ใช้บังคับ",
+    body: [
+      "ข้อกำหนดนี้อยู่ภายใต้กฎหมายไทย และหากมีข้อพิพาทจะพิจารณาที่จังหวัดเชียงใหม่",
+    ],
+  },
+  {
+    title: "14. ช่องทางติดต่อ",
+    body: [
+      "อีเมล: support@healthcheck.cm",
+      "ที่อยู่: HealthCheck CM Price, Chiang Mai, Thailand",
+    ],
+  },
+];
+
 export default function TermsPage() {
   return (
-    <article className="prose mx-auto max-w-3xl prose-slate dark:prose-invert">
-      <Link href="/" className="text-sm text-brand hover:underline">
-        ← กลับหน้าแรก
-      </Link>
-      <div
-        className="mt-6"
-        dangerouslySetInnerHTML={{ __html: termsRaw }}
-      />
+    <article className="mx-auto max-w-3xl space-y-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <header className="space-y-2">
+        <Link href="/" className="text-sm text-brand hover:underline">
+          ← กลับหน้าแรก
+        </Link>
+        <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">ข้อกำหนดการใช้บริการ</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">อัปเดตล่าสุด: ตุลาคม 2567</p>
+      </header>
+      <div className="space-y-5 text-sm text-slate-600 dark:text-slate-300">
+        {sections.map((section) => (
+          <section key={section.title} className="space-y-2">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{section.title}</h2>
+            <ul className="space-y-1">
+              {section.body.map((paragraph) => (
+                <li key={paragraph} className="leading-relaxed">
+                  {paragraph}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
     </article>
   );
 }

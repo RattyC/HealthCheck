@@ -19,8 +19,6 @@
 - `lib/` Prisma client, session tools, rate-limit, logger
 - `prisma/schema.prisma` สคีมา + `prisma/seed.mjs` ชุด seed data (4 โรงพยาบาล, 13 แพ็กเกจ)
 - `docs/production-checklist.md` เช็กลิสต์เตรียมโปรดักชัน
-- `docs/legal/terms-of-service.md` ข้อกำหนดการใช้บริการ
-- `docs/legal/privacy-policy.md` นโยบายความเป็นส่วนตัว
 
 ## การเริ่มต้น
 1) ติดตั้งแพ็กเกจ (เลือกแพ็กเกจแมเนเจอร์ที่ชอบ)
