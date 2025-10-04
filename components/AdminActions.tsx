@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useToast } from "@/components/ToastProvider";
+import AdminPackageDiffDialog from "@/components/AdminPackageDiffDialog";
 
 type Action = "approve" | "reject" | "archive";
 
@@ -70,6 +71,7 @@ export default function AdminActions({
   const [activeAction, setActiveAction] = useState<Action | null>(null);
   const [reason, setReason] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [diffOpen, setDiffOpen] = useState(false);
   const router = useRouter();
   const { push } = useToast();
 
@@ -135,7 +137,14 @@ export default function AdminActions({
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex flex-wrap items-center gap-1">
+      <button
+        type="button"
+        onClick={() => setDiffOpen(true)}
+        className="rounded border border-slate-200 px-2 py-1 text-xs text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+      >
+        ดู Diff
+      </button>
       {(["approve", "reject", "archive"] as Action[]).map((action) => {
         const buttonDisabled = pending || disabled || eligibility[action] === false;
         const label = action.charAt(0).toUpperCase() + action.slice(1);
@@ -161,6 +170,8 @@ export default function AdminActions({
           </button>
         );
       })}
+
+      <AdminPackageDiffDialog packageId={id} open={diffOpen} onOpenChange={setDiffOpen} />
 
       <Dialog.Root open={Boolean(activeAction)} onOpenChange={(open) => (!open ? setActiveAction(null) : null)}>
         <Dialog.Portal>

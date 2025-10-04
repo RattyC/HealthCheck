@@ -51,8 +51,20 @@ export default async function SignInPage({
             </ul>
           </div>
           <div className={styles.signInHeroFooter}>
-            <p>Demo สำหรับการทดสอบ: <span className="font-medium">admin@healthcheck.local</span></p>
-            <p className="font-mono text-sm">รหัสผ่าน: admin1234</p>
+            <div>
+              <p className="text-sm text-slate-200/90">บัญชีลูกค้าทดลอง</p>
+              <p>
+                <span className="font-medium">user@healthcheck.local</span>
+                <span className="ml-2 font-mono text-xs">รหัสผ่าน: user1234</span>
+              </p>
+            </div>
+            <div className="mt-3">
+              <p className="text-sm text-slate-200/90">บัญชีผู้ดูแลระบบ</p>
+              <p>
+                <span className="font-medium">admin@healthcheck.local</span>
+                <span className="ml-2 font-mono text-xs">รหัสผ่าน: admin1234</span>
+              </p>
+            </div>
           </div>
         </aside>
 

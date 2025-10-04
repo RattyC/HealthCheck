@@ -51,9 +51,24 @@ export const metadata: Metadata = {
     images: ["/og-image.svg"],
   },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png" },
+      { url: "/apple-touch-icon-precomposed.png" },
+    ],
+    shortcut: [
+      { url: "/favicon.ico" },
+    ],
+  },
+  manifest: "/site.webmanifest",
+  alternates: {
+    canonical: canonicalUrl,
+  },
+  other: {
+    "theme-color": "#0ea5a0",
   },
 };
 

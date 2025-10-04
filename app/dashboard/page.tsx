@@ -7,6 +7,8 @@ import type { Prisma } from "@prisma/client";
 import ThemeToggle from "@/components/ThemeToggle";
 import SavedSearchList from "@/components/SavedSearchList";
 import EmptyState from "@/components/EmptyState";
+import PriceHistoryChart, { type PriceHistoryPoint } from "@/components/PriceHistoryChart";
+import RemoveBookmarkButton from "@/components/RemoveBookmarkButton";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { DB_TIMEOUT_MS } from "@/lib/runtime-config";
@@ -38,6 +40,11 @@ type ViewWithPackage = Prisma.PackageViewGetPayload<{
 type NotificationSubscriptionWithPackage = Prisma.NotificationSubscriptionGetPayload<{
   include: { package: { select: typeof healthPackageSelect } };
 }>;
+
+type PriceTrendSeries = {
+  package: BookmarkWithPackage["package"];
+  points: PriceHistoryPoint[];
+};
 
 type ProfileSummary = {
   id: string;
@@ -140,6 +147,7 @@ export default async function DashboardPage() {
   let recentViews: ViewWithPackage[] = [];
   let notifications = [] as Awaited<ReturnType<typeof prisma.notification.findMany>>;
   let notificationSubscriptions: NotificationSubscriptionWithPackage[] = [];
+  let priceTrendSeries: PriceTrendSeries[] = [];
   let loadError: Error | null = null;
 
   try {
@@ -254,6 +262,36 @@ export default async function DashboardPage() {
     notifications = notificationsResult;
     notificationSubscriptions = subscriptionsResult;
     trends = trendingResult;
+
+    const bookmarkTargets = recentBookmarks
+      .map((bookmark) => bookmark.package)
+      .filter((pkg): pkg is BookmarkWithPackage["package"] => Boolean(pkg))
+      .slice(0, 3);
+
+    const targetIds = Array.from(new Set(bookmarkTargets.map((pkg) => pkg.id))).slice(0, 3);
+    if (targetIds.length > 0) {
+      const historyResult = await withTimeout(
+        prisma.priceHistory.findMany({
+          where: { packageId: { in: targetIds } },
+          orderBy: { recordedAt: "asc" },
+          take: 30,
+        }),
+        [],
+        "dashboard.price-history"
+      );
+
+      priceTrendSeries = bookmarkTargets
+        .map((pkg) => ({
+          package: pkg,
+          points: historyResult
+            .filter((history) => history.packageId === pkg.id)
+            .map<PriceHistoryPoint>((history) => ({
+              recordedAt: history.recordedAt.toISOString(),
+              price: history.price,
+            })),
+        }))
+        .filter((series) => series.points.length > 1);
+    }
   } catch (error) {
     loadError = error instanceof Error ? error : new Error(String(error));
     logger.error("dashboard.page.query_failed", { error: `${error}` });
@@ -265,6 +303,16 @@ export default async function DashboardPage() {
     { label: "ลิงก์เปรียบเทียบ", value: summary.compareCount, href: "#compare-history" },
     { label: "การแจ้งเตือน", value: summary.notificationsCount, href: "#notifications" },
   ];
+
+  const bookmarkGroups = recentBookmarks.reduce<Map<string, BookmarkWithPackage[]>>((acc, bookmark) => {
+    const hospitalName = bookmark.package?.hospital?.name ?? "ไม่ระบุโรงพยาบาล";
+    const key = hospitalName.trim().length ? hospitalName : "ไม่ระบุโรงพยาบาล";
+    const current = acc.get(key) ?? [];
+    current.push(bookmark);
+    acc.set(key, current);
+    return acc;
+  }, new Map());
+  const groupedBookmarkEntries = Array.from(bookmarkGroups.entries()).sort(([a], [b]) => a.localeCompare(b));
 
   const profileName = profile?.name ?? sessionUser?.name ?? "ผู้ใช้ใหม่";
   const profileEmail = profile?.email ?? sessionUser?.email ?? "";
@@ -466,37 +514,85 @@ export default async function DashboardPage() {
                 icon={<Bookmark className="h-6 w-6" aria-hidden />}
               />
             ) : (
-              <ul className="grid gap-3 md:grid-cols-2">
-                {recentBookmarks.map((bookmark) => (
-                  <li
-                    key={bookmark.id}
-                    className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm transition hover:border-brand/60 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <Link
-                          href={`/packages/${bookmark.package.id}`}
-                          className="font-medium text-slate-900 hover:text-brand dark:text-white"
-                        >
-                          {bookmark.package.title}
-                        </Link>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                          {bookmark.package.hospital?.name ?? "-"} · ฿{bookmark.package.basePrice.toLocaleString()}
-                        </p>
-                      </div>
-                      <span className="text-[11px] text-slate-400 dark:text-slate-500">{formatRelative(bookmark.createdAt)}</span>
+              <div className="space-y-4">
+                {groupedBookmarkEntries.map(([hospital, items]) => (
+                  <div key={hospital} className="space-y-3 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{hospital}</h3>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">{items.length} รายการ</span>
                     </div>
-                    <div className="mt-3 flex items-center gap-2 text-xs">
-                      <Link href={`/compare?add=${bookmark.package.id}`} className="rounded-full border border-slate-200 px-3 py-1 text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
-                        เพิ่มไปยัง Compare
-                      </Link>
-                      <Link href={`/packages/${bookmark.package.id}`} className="rounded-full border border-slate-200 px-3 py-1 text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
-                        ดูรายละเอียด
-                      </Link>
-                    </div>
-                  </li>
+                    <ul className="space-y-3">
+                      {items.map((bookmark) => (
+                        <li key={bookmark.id} className="rounded-xl border border-slate-100 px-3 py-3 dark:border-slate-800">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <Link
+                                href={`/packages/${bookmark.package.id}`}
+                                className="font-medium text-slate-900 hover:text-brand dark:text-white"
+                              >
+                                {bookmark.package.title}
+                              </Link>
+                              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                ฿{bookmark.package.basePrice.toLocaleString()} • บันทึก {formatRelative(bookmark.createdAt)}
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 text-xs sm:justify-end">
+                              <Link
+                                href={`/compare?add=${bookmark.package.id}`}
+                                className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                              >
+                                เพิ่มไปยัง Compare
+                              </Link>
+                              <Link
+                                href={`/packages/${bookmark.package.id}`}
+                                className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                              >
+                                ดูรายละเอียด
+                              </Link>
+                              <RemoveBookmarkButton bookmarkId={bookmark.id} />
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
+            )}
+
+            {priceTrendSeries.length > 0 && (
+              <div className="space-y-4 rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">แนวโน้มราคาของแพ็กเกจที่คุณติดตาม</h3>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">แสดงสูงสุด {priceTrendSeries.length} แพ็กเกจ</span>
+                </div>
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {priceTrendSeries.map((series) => (
+                    <div key={series.package.id} className="rounded-xl border border-slate-200 bg-white/80 p-4 dark:border-slate-700 dark:bg-slate-900/70">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <Link
+                            href={`/packages/${series.package.id}`}
+                            className="text-sm font-semibold text-slate-900 hover:text-brand dark:text-white"
+                          >
+                            {series.package.title}
+                          </Link>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{series.package.hospital?.name ?? "-"}</div>
+                        </div>
+                        <div className="text-right text-xs text-slate-500 dark:text-slate-400">
+                          <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                            ฿{series.package.basePrice.toLocaleString()}
+                          </div>
+                          <div>ราคาอัปเดตล่าสุด</div>
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <PriceHistoryChart data={series.points.slice(-10)} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </section>
 

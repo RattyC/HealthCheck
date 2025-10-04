@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shield, LayoutDashboard, PackageSearch, ShoppingCart } from "lucide-react";
+import { Shield, LayoutDashboard, PackageSearch, ShoppingCart, BarChart3 } from "lucide-react";
 import { requireRole } from "@/lib/auth-guard";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -8,6 +8,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const navLinks = [
     { href: "/admin", label: "ภาพรวม", icon: <LayoutDashboard className="h-4 w-4" aria-hidden /> },
     { href: "/admin/packages", label: "แพ็กเกจ", icon: <PackageSearch className="h-4 w-4" aria-hidden /> },
+    { href: "/admin/analytics", label: "Analytics", icon: <BarChart3 className="h-4 w-4" aria-hidden /> },
     { href: "/admin/cart", label: "ตะกร้า/คำสั่งซื้อ", icon: <ShoppingCart className="h-4 w-4" aria-hidden /> },
   ];
 

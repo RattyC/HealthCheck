@@ -93,6 +93,7 @@ model HealthPackage {
   @@index([hospitalId])
   @@index([basePrice])
   @@index([updatedAt])
+  @@index([status, hospitalId, updatedAt])
 }
 
 model PackageItem {

@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-guard";
 import { resolveHospitalLogo } from "@/lib/hospital-logos";
+import AdminCartExportButton from "@/components/AdminCartExportButton";
 
 export const revalidate = 0;
 
@@ -108,6 +109,9 @@ export default async function AdminCartPage() {
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">ตะกร้าของผู้ใช้งาน</h1>
         <p className="text-sm text-slate-600 dark:text-slate-300">ดูว่าใครกำลังสนใจแพ็กเกจใดเพื่อช่วยติดตามและเสนอขาย</p>
+        <div className="pt-2">
+          <AdminCartExportButton />
+        </div>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

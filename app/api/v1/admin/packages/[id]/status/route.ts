@@ -80,6 +80,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     try {
       revalidatePath("/packages");
       revalidatePath("/admin/packages");
+      revalidateTag("packages:list");
       revalidateTag(`package:${id}`);
     } catch (err) {
       logger.warn("revalidate.failed", { error: `${err}` });

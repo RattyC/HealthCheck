@@ -10,7 +10,7 @@ import PackageBookingPanel from "@/components/PackageBookingPanel";
 import { getFallbackPromotions } from "@/lib/fallback-data";
 import type { FallbackPromotion } from "@/lib/fallback-data";
 import { getFallbackPackages, type FallbackPackage } from "@/lib/fallback-data";
-import { Info } from "lucide-react";
+import { Info, Phone, MapPin, ExternalLink } from "lucide-react";
 
 export const revalidate = 300;
 
@@ -192,19 +192,61 @@ export default async function PackageDetail({ params }: { params: Promise<{ id: 
   const priceChangeLabel = priceChange === 0 ? "ไม่มีการเปลี่ยนแปลง" : priceChange > 0 ? `เพิ่มขึ้น ฿${priceChange.toLocaleString()}` : `ลดลง ฿${Math.abs(priceChange).toLocaleString()}`;
   const lastUpdated = pkg.updatedAt ? format(pkg.updatedAt, "d MMM yyyy") : "-";
   const isNew = pkg.updatedAt ? differenceInDays(new Date(), pkg.updatedAt) <= 14 : false;
+  const hospitalName = pkg.hospital?.name ?? "ไม่ระบุโรงพยาบาล";
+  const hospitalPhone = pkg.hospital?.phone ?? null;
+  const hospitalWebsite = pkg.hospital?.website ?? null;
+  const hospitalDistrict = pkg.hospital?.district ?? null;
+  const hospitalMapQuery = pkg.hospital
+    ? [pkg.hospital.name, hospitalDistrict].filter(Boolean).join(" ") || pkg.hospital.name || "โรงพยาบาล"
+    : null;
+  const hospitalMapLink = hospitalMapQuery
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hospitalMapQuery)}`
+    : null;
 
   return (
     <article className="space-y-6">
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{pkg.title}</h1>
-          <div className="text-sm text-gray-600">{pkg.hospital?.name}</div>
+          <div className="text-sm text-gray-600">{hospitalName}</div>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
             {isNew && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-semibold text-emerald-600">อัปเดตใหม่</span>}
             {pkg.gender && pkg.gender !== "any" && (
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500">{pkg.gender}</span>
             )}
           </div>
+          {(hospitalPhone || hospitalMapLink || hospitalWebsite) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-600">
+              {hospitalPhone && (
+                <a
+                  href={`tel:${hospitalPhone.replace(/[^0-9+]/g, "")}`}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 transition hover:border-brand hover:text-brand dark:border-slate-700 dark:hover:border-brand"
+                >
+                  <Phone className="h-3.5 w-3.5" aria-hidden /> โทร {hospitalPhone}
+                </a>
+              )}
+              {hospitalMapLink && (
+                <a
+                  href={hospitalMapLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 transition hover:border-brand hover:text-brand dark:border-slate-700 dark:hover:border-brand"
+                >
+                  <MapPin className="h-3.5 w-3.5" aria-hidden /> แผนที่ {hospitalDistrict ?? "เชียงใหม่"}
+                </a>
+              )}
+              {hospitalWebsite && (
+                <a
+                  href={hospitalWebsite}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 transition hover:border-brand hover:text-brand dark:border-slate-700 dark:hover:border-brand"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden /> เว็บไซต์
+                </a>
+              )}
+            </div>
+          )}
         </div>
         <div className="text-right">
           <div className="text-2xl font-semibold">฿{pkg.basePrice.toLocaleString()}</div>

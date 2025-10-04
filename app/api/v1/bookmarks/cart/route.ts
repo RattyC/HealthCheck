@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   packageId: z.string().cuid(),
@@ -25,11 +26,17 @@ function extractUserId(session: unknown): string | null {
   return typeof userId === "string" && userId.length > 0 ? userId : null;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await getSession();
   const userId = extractUserId(session);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const limiter = rateLimit(`cart:get:${ip}`, Number(process.env.RATE_LIMIT_CART_GET ?? 120));
+  if (!limiter.success) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
   const cart = await prisma.cart.findUnique({
@@ -63,6 +70,12 @@ export async function POST(req: NextRequest) {
   const userId = extractUserId(session);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const limiter = rateLimit(`cart:post:${ip}`, Number(process.env.RATE_LIMIT_CART_POST ?? 60));
+  if (!limiter.success) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
   const payload = await req.json().catch(() => null);

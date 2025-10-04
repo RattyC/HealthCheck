@@ -1,7 +1,5 @@
 // Admin packages table for reviewing, filtering, and moderating health package records.
 import { PackageStatus, type Prisma } from "@prisma/client";
-import AdminStatusBadge from "@/components/AdminStatusBadge";
-import AdminActions from "@/components/AdminActions";
 import AdminPackagesToolbar from "@/components/AdminPackagesToolbar";
 import Pagination from "@/components/Pagination";
 import EmptyState from "@/components/EmptyState";
@@ -10,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { adminPackageQuerySchema } from "@/lib/validators";
 import { requireRole } from "@/lib/auth-guard";
 import { logger } from "@/lib/logger";
+import AdminPackagesTable, { type AdminPackageListItem } from "@/components/AdminPackagesTable";
 
 export const revalidate = 30;
 
@@ -89,6 +88,16 @@ export default async function AdminPackages({
 
   const defaults = { q, status: ACCEPTED_STATUS.has(statusParam) ? statusParam : "all", sort: sortParam, limit };
 
+  const tableItems: AdminPackageListItem[] = items.map((pkg) => ({
+    id: pkg.id,
+    title: pkg.title,
+    status: pkg.status,
+    basePrice: pkg.basePrice,
+    updatedAt: pkg.updatedAt.toISOString(),
+    includeCount: pkg._count?.includes ?? 0,
+    hospitalName: pkg.hospital?.name ?? null,
+  }));
+
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white">จัดการแพ็กเกจ</h1>
@@ -100,38 +109,7 @@ export default async function AdminPackages({
         icon={<FileSearch className="h-6 w-6" aria-hidden />}
       />
       ) : (
-        <div className="overflow-x-auto rounded-md border border-slate-200 bg-white shadow-sm shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-900 dark:shadow-none">
-          <table className="min-w-full text-sm">
-            <thead className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              <tr>
-                <th className="p-2 text-left font-semibold">แพ็กเกจ</th>
-                <th className="p-2 text-left font-semibold">โรงพยาบาล</th>
-                <th className="p-2 text-right font-semibold">ราคา</th>
-                <th className="p-2 text-center font-semibold">สถานะ</th>
-                <th className="p-2 text-left font-semibold">อัปเดต</th>
-                <th className="p-2 text-left font-semibold">จัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((pkg) => (
-                <tr
-                  key={pkg.id}
-                  className="border-t border-slate-100 transition hover:-translate-y-[1px] hover:bg-slate-50 hover:shadow-sm dark:border-slate-800 dark:hover:bg-slate-800/60"
-                >
-                  <td className="p-2">
-                    <div className="font-medium text-slate-900 dark:text-white">{pkg.title}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">{pkg._count?.includes ?? 0} รายการตรวจ</div>
-                  </td>
-                  <td className="p-2 text-slate-700 dark:text-slate-300">{pkg.hospital?.name ?? "-"}</td>
-                  <td className="p-2 text-right text-slate-700 dark:text-slate-200">฿{pkg.basePrice.toLocaleString()}</td>
-                  <td className="p-2 text-center"><AdminStatusBadge status={pkg.status} /></td>
-                  <td className="p-2 text-xs text-slate-500 dark:text-slate-400">{new Date(pkg.updatedAt).toLocaleString()}</td>
-                  <td className="p-2"><AdminActions id={pkg.id} status={pkg.status} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AdminPackagesTable items={tableItems} />
       )}
       <Pagination page={page} limit={limit} total={total} />
     </section>

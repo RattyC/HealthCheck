@@ -1,4 +1,5 @@
 // Packages listing page handles filtering, pagination, and best-value highlighting.
+import { unstable_cache } from "next/cache";
 import FilterBar from "@/components/FilterBar";
 import PackageCard from "@/components/PackageCard";
 import Pagination from "@/components/Pagination";
@@ -164,6 +165,32 @@ function buildSerializableParams(input: PackageSearchInput) {
   return entries;
 }
 
+const cachedPackageQuery = unstable_cache(
+  async (payload: string) => {
+    const { where, orderBy, skip, limit } = JSON.parse(payload) as {
+      where: Prisma.HealthPackageWhereInput;
+      orderBy: Prisma.HealthPackageOrderByWithRelationInput;
+      skip: number;
+      limit: number;
+    };
+
+    const [total, rows] = await Promise.all([
+      prisma.healthPackage.count({ where }),
+      prisma.healthPackage.findMany({
+        where,
+        orderBy,
+        select: packageSelect,
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    return { total, rows };
+  },
+  ["packages:list"],
+  { revalidate: 300, tags: ["packages:list"] }
+);
+
 export default async function PackagesPage({
   searchParams,
 }: {
@@ -204,30 +231,30 @@ export default async function PackagesPage({
   let usingFallback = false;
 
   const where = buildWhereClause(input);
+  const orderBy = resolveOrderBy(input.sort);
 
   try {
-    const [hospitalRows, packageTotal, packageRows] = await withTimeout(
-      prisma.$transaction([
+    const [hospitalRows, packageResult] = await Promise.all([
+      withTimeout(
         prisma.hospital.findMany({
           include: { _count: { select: { packages: true } } },
           orderBy: { name: "asc" },
         }),
-        prisma.healthPackage.count({ where }),
-        prisma.healthPackage.findMany({
-          where,
-          orderBy: resolveOrderBy(input.sort),
-          select: packageSelect,
-          skip,
-          take: input.limit,
-        }),
-      ]),
-      [[], 0, []] as [HospitalRow[], number, PackageRow[]],
-      "packages.page.tx"
-    );
+        [] as HospitalRow[],
+        "packages.hospitals"
+      ),
+      withTimeout(
+        cachedPackageQuery(
+          JSON.stringify({ where, orderBy, skip, limit: input.limit })
+        ),
+        { total: 0, rows: [] as PackageRow[] },
+        "packages.cache"
+      ),
+    ]);
 
     hospitals = hospitalRows.map((h) => ({ value: h.id, label: `${h.name} (${h._count?.packages ?? 0})` }));
-    total = packageTotal;
-    items = packageRows.map((pkg) => ({
+    total = packageResult.total;
+    items = packageResult.rows.map((pkg) => ({
       id: pkg.id,
       title: pkg.title,
       slug: pkg.slug,

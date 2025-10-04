@@ -435,6 +435,18 @@ export default async function HomePage() {
   }
 
   const hasPackages = resolvedTopPackages.length > 0;
+  const hotDeals = resolvedTopPackages
+    .slice()
+    .sort((a, b) => {
+      const dealsA = (a.metrics?.compareCount ?? 0) + (a.metrics?.bookmarkCount ?? 0);
+      const dealsB = (b.metrics?.compareCount ?? 0) + (b.metrics?.bookmarkCount ?? 0);
+      if (dealsB === dealsA) {
+        return (b.metrics?.viewCount ?? 0) - (a.metrics?.viewCount ?? 0);
+      }
+      return dealsB - dealsA;
+    })
+    .slice(0, 3);
+  const hasHotDeals = hotDeals.length > 0;
   const displayHospitals = resolvedHospitals.map((hospital) => withResolvedHospitalLogo(hospital));
   const hasHospitals = displayHospitals.length > 0;
   const persona = isAdmin ? "admin" : isAuthenticated ? "user" : "guest";
@@ -841,6 +853,76 @@ export default async function HomePage() {
                 กำลังแสดงข้อมูลตัวอย่างบางส่วนแทนข้อมูลจริงระหว่างรอการเชื่อมต่อฐานข้อมูล เพื่อให้คุณสำรวจหน้าร้านได้ต่อเนื่อง
               </p>
             </div>
+          )}
+
+          {hasHotDeals && (
+            <section aria-labelledby="hot-deals" className="space-y-4">
+              <div className="flex flex-col gap-3 rounded-3xl border border-amber-200 bg-amber-50/70 p-5 shadow-sm dark:border-amber-500/40 dark:bg-amber-900/20">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 id="hot-deals" className="text-lg font-semibold text-amber-900 dark:text-amber-200">
+                      Hot Deals ประจำสัปดาห์
+                    </h2>
+                    <p className="text-sm text-amber-800/90 dark:text-amber-200/80">
+                      แพ็กเกจที่มีผู้เปรียบเทียบและบันทึกมากที่สุด พร้อมโปรโมชั่นหรือหมายเหตุพิเศษ
+                    </p>
+                  </div>
+                  <Link
+                    href="/packages?sort=popular"
+                    className="inline-flex items-center justify-center rounded-full border border-amber-400 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-500 hover:text-white dark:border-amber-500 dark:text-amber-200 dark:hover:bg-amber-500"
+                  >
+                    ดูดีลทั้งหมด
+                  </Link>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {hotDeals.map((deal) => (
+                    <article
+                      key={deal.id}
+                      className="relative overflow-hidden rounded-2xl border border-amber-200 bg-white/90 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-amber-500/40 dark:bg-slate-900/80"
+                    >
+                      <div className="absolute right-4 top-4 rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                        Hot
+                      </div>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-base font-semibold text-slate-900 dark:text-white">{deal.title}</h3>
+                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{deal.hospital?.name ?? "ไม่ระบุโรงพยาบาล"}</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                        <div className="flex items-center justify-between">
+                          <span>ราคาเริ่มต้น</span>
+                          <span className="text-base font-semibold text-amber-700 dark:text-amber-300">{currency.format(deal.basePrice)}</span>
+                        </div>
+                        {deal.priceNote ? (
+                          <div className="rounded-lg border border-amber-200/60 bg-amber-100/60 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/30 dark:text-amber-200">
+                            {deal.priceNote}
+                          </div>
+                        ) : null}
+                        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                          <span>ยอดบันทึก</span>
+                          <span>{deal.metrics?.bookmarkCount ?? 0} ราย</span>
+                        </div>
+                      </div>
+                      <div className="mt-5 flex items-center gap-2 text-sm">
+                        <Link
+                          href={`/packages/${deal.slug}`}
+                          className="inline-flex flex-1 items-center justify-center rounded-full border border-amber-400 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-500 hover:text-white dark:border-amber-500 dark:text-amber-200 dark:hover:bg-amber-500"
+                        >
+                          ดูรายละเอียด
+                        </Link>
+                        <Link
+                          href={`/compare?add=${deal.id}`}
+                          className="inline-flex items-center justify-center rounded-full border border-amber-400 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-500 hover:text-white dark:border-amber-500 dark:text-amber-200 dark:hover:bg-amber-500"
+                        >
+                          เปรียบเทียบ
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
           )}
 
           <section aria-labelledby="quick-filters" className="space-y-4">

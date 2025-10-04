@@ -8,32 +8,32 @@ Use this list to track the remaining polish before handing HealthCheck CM Price 
 - [x] Craft friendly empty states with illustrations or icons per page (search, bookmarks, admin)
 - [x] Ship dark mode with toggle persisted per user preference
 - [x] Enable global command palette (`Cmd/Ctrl + K`) to jump to hospitals/packages/settings
-- [ ] Ensure consistent spacing, typography scale, and color usage across layouts
+- [x] Ensure consistent spacing, typography scale, and color usage across layouts
 
 ## 2. User-Facing Features
 - [x] Personalise หน้าแรกและโปรโมชันตามบทบาท (ผู้เยี่ยมชม/ผู้ใช้/แอดมิน) พร้อมลิงก์ไปยังกระบวนการที่เกี่ยวข้อง
-- [ ] Make compare selections shareable via URL or social share dialog
-- [ ] Plot price history using charts (e.g., Recharts) in package detail and dashboard
-- [ ] Highlight "Hot Deals" / trending packages on the home page
-- [ ] Extend bookmark manager with grouping, removal, and direct compare actions
-- [ ] Provide inline hospital contact information (call, map link) on detail pages
+- [x] Make compare selections shareable via URL or social share dialog
+- [x] Plot price history using charts (e.g., Recharts) in package detail and dashboard
+- [x] Highlight "Hot Deals" / trending packages on the home page
+- [x] Extend bookmark manager with grouping, removal, and direct compare actions
+- [x] Provide inline hospital contact information (call, map link) on detail pages
 
 ## 3. Admin & Operations
-- [ ] Show diff view when approving package updates (price/items changes)
-- [ ] Support bulk approve/archive actions in admin tables
-- [ ] Log admin activities (who approved/edited and when)
-- [ ] Add analytics dashboard for search volume, popular filters, compares/day
-- [ ] Surface user cart interest in weekly digest or export CSV
+- [x] Show diff view when approving package updates (price/items changes)
+- [x] Support bulk approve/archive actions in admin tables
+- [x] Log admin activities (who approved/edited and when)
+- [x] Add analytics dashboard for search volume, popular filters, compares/day
+- [x] Surface user cart interest in weekly digest or export CSV
 
 ## 4. Performance, Stability, Security
-- [ ] Add PostgreSQL indexes on `HealthPackage(status, hospitalId, updatedAt)` and other hot queries
-- [ ] Use ISR cache tags or SWR revalidation for package lists to reduce DB load
+- [x] Add PostgreSQL indexes on `HealthPackage(status, hospitalId, updatedAt)` and other hot queries
+- [x] Use ISR cache tags or SWR revalidation for package lists to reduce DB load
 - [x] ตั้งค่า server timeouts (`withTimeout`) สำหรับสรุปหน้าแรกตามบทบาท ลดโอกาสที่ DB ช้าแล้วทำให้ UX กระตุก
-- [ ] Validate all API payloads with Zod and return friendly errors
-- [ ] Enforce server-side role checks (RBAC) for every admin route & API
-- [ ] Apply rate limiting to public APIs (search, compare, cart)
-- [ ] Configure error boundaries per route with helpful guidance
-- [ ] Monitor slow queries with Prisma logs or APM (e.g., Sentry / New Relic)
+- [x] Validate all API payloads with Zod and return friendly errors
+- [x] Enforce server-side role checks (RBAC) for every admin route & API
+- [x] Apply rate limiting to public APIs (search, compare, cart)
+- [x] Configure error boundaries per route with helpful guidance
+- [x] Monitor slow queries with Prisma logs or APM (e.g., Sentry / New Relic)
 
 ## 5. Content & Compliance
 - [ ] Prepare Terms of Service and Privacy Policy pages with legal review
