@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, Link2, Loader2, Share2, Trash2 } from "lucide-react";
 import { useCompare } from "@/components/CompareContext";
 import { useToast } from "@/components/ToastProvider";
+import { resolveHospitalLogo } from "@/lib/hospital-logos";
 
 export type ComparePackage = {
   id: string;
@@ -31,7 +32,9 @@ export default function CompareClient({ initialPackages }: { initialPackages: Co
   }, []);
 
   const items = useMemo(() => {
-    const byId = new Map(initialPackages.map((pkg) => [pkg.id, pkg]));
+    const byId = new Map(
+      initialPackages.map((pkg) => [pkg.id, { ...pkg, hospital: { ...pkg.hospital, logoUrl: resolveHospitalLogo(pkg.hospital) } }]),
+    );
     compare.items.forEach((item) => {
       if (!byId.has(item.id)) {
         byId.set(item.id, {
@@ -39,13 +42,20 @@ export default function CompareClient({ initialPackages }: { initialPackages: Co
           title: item.title,
           slug: item.slug,
           basePrice: item.basePrice,
-          hospital: { id: "", name: item.hospitalName, logoUrl: null },
+          hospital: {
+            id: "",
+            name: item.hospitalName,
+            logoUrl: resolveHospitalLogo({ id: "", name: item.hospitalName, logoUrl: null }),
+          },
           includes: [],
           metrics: null,
         });
       }
     });
-    return Array.from(byId.values()).slice(0, 4);
+    return Array.from(byId.values()).slice(0, 4).map((pkg) => ({
+      ...pkg,
+      hospital: { ...pkg.hospital, logoUrl: resolveHospitalLogo(pkg.hospital) },
+    }));
   }, [initialPackages, compare.items]);
 
   const idsQuery = items.map((pkg) => pkg.id).join(",");
@@ -154,9 +164,21 @@ export default function CompareClient({ initialPackages }: { initialPackages: Co
         {items.map((pkg) => (
           <article key={pkg.id} className="interactive-card flex flex-col gap-3 rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{pkg.title}</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{pkg.hospital.name}</p>
+              <div className="flex items-start gap-3">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-50 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                  {pkg.hospital.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={pkg.hospital.logoUrl} alt={pkg.hospital.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-600 dark:text-slate-200">
+                      {pkg.hospital.name?.slice(0, 2) ?? "รพ"}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{pkg.title}</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{pkg.hospital.name}</p>
+                </div>
               </div>
               <button
                 type="button"

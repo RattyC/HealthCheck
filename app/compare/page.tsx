@@ -1,4 +1,5 @@
 // Compare page renders side-by-side analysis of selected health packages.
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import CompareClient, { type ComparePackage } from "@/components/CompareClient";
 import { prisma } from "@/lib/prisma";
@@ -40,6 +41,12 @@ export default async function ComparePage({
 
   return (
     <section className="space-y-6">
+      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
+        <div className="font-medium text-slate-700 dark:text-slate-200">เลือกแพ็กเกจได้สูงสุด 4 รายการเพื่อเปรียบเทียบ</div>
+        <Link href="/compare/new" className="inline-flex items-center gap-2 text-sm font-semibold text-brand hover:underline">
+          ดูแพ็กเกจใหม่ล่าสุด
+        </Link>
+      </div>
       <CompareClient initialPackages={packages} />
     </section>
   );

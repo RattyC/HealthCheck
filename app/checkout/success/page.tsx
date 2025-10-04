@@ -3,7 +3,7 @@ import { CheckCircle, Info } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
-import { buildPaymentInstructions } from "@/lib/payments";
+import { buildPaymentInstructions, getPaymentGuide, resolvePaymentMethod } from "@/lib/payments";
 import { logger } from "@/lib/logger";
 
 const currency = new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB" });
@@ -16,8 +16,10 @@ export default async function CheckoutSuccess({
   const params = await searchParams;
   const orderIdParam = params.orderId;
   const refParam = params.ref;
+  const methodParam = params.method;
   const orderId = Array.isArray(orderIdParam) ? orderIdParam[0] : orderIdParam ?? null;
   const fallbackRef = Array.isArray(refParam) ? refParam[0] : refParam ?? null;
+  const fallbackMethod = Array.isArray(methodParam) ? methodParam[0] : methodParam ?? null;
 
   const user = await requireUser("/checkout/success");
 
@@ -53,9 +55,11 @@ export default async function CheckoutSuccess({
   }
 
   const referenceCode = order?.referenceCode ?? fallbackRef ?? "-";
+  const resolvedMethod = resolvePaymentMethod(order?.paymentMethod ?? fallbackMethod);
   const paymentInstruction = order
-    ? buildPaymentInstructions(order.paymentMethod ?? "promptpay", order.paymentStatus, order.totalAmount, order.referenceCode)
+    ? buildPaymentInstructions(resolvedMethod, order.paymentStatus, order.totalAmount, order.referenceCode)
     : null;
+  const paymentGuide = getPaymentGuide(resolvedMethod);
   const items: OrderWithItems["items"] = order?.items ?? [];
 
   return (
@@ -123,21 +127,19 @@ export default async function CheckoutSuccess({
 
               <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">สถานะการชำระเงิน</h3>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                  ช่องทาง: {paymentInstruction?.method === "promptpay"
-                    ? "PromptPay"
-                    : paymentInstruction?.method === "bank_transfer"
-                    ? "โอนผ่านธนาคาร"
-                    : paymentInstruction?.method === "credit_card"
-                    ? "บัตรเครดิต"
-                    : "ชำระเงินสด"}
-                </p>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">ช่องทาง: {paymentGuide.label}</p>
                 <p className="text-sm text-slate-600 dark:text-slate-300">สถานะ: {order.paymentStatus}</p>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">จำนวนเงิน: {currency.format(order.totalAmount)}</p>
                 {paymentInstruction ? (
-                  <p className="mt-3 rounded-lg bg-white/60 p-3 text-xs text-slate-600 shadow-inner dark:bg-slate-800/70 dark:text-slate-300">
-                    {paymentInstruction.note}
-                  </p>
+                  <div className="mt-3 space-y-2 rounded-lg bg-white/60 p-3 text-xs text-slate-600 shadow-inner dark:bg-slate-800/70 dark:text-slate-300">
+                    <p className="font-medium text-slate-700 dark:text-slate-200">สิ่งที่ต้องทำ:</p>
+                    <ul className="space-y-1">
+                      {paymentGuide.steps.map((step) => (
+                        <li key={step}>• {step}</li>
+                      ))}
+                    </ul>
+                    <p className="pt-1 text-[11px] text-slate-500 dark:text-slate-400">{paymentInstruction.note}</p>
+                  </div>
                 ) : null}
               </section>
             </div>

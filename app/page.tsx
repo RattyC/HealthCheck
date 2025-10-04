@@ -16,6 +16,7 @@ import {
   Info,
 } from "lucide-react";
 import { getTopFallbackPackages, getFallbackHospitalSummaries } from "@/lib/fallback-data";
+import { withResolvedHospitalLogo } from "@/lib/hospital-logos";
 import { getInsuranceBundles } from "@/lib/insurance-data";
 import { ADMIN_TIMEOUT_MS, DB_TIMEOUT_MS } from "@/lib/runtime-config";
 import { prisma } from "@/lib/prisma";
@@ -385,7 +386,8 @@ export default async function HomePage() {
   }
 
   const hasPackages = resolvedTopPackages.length > 0;
-  const hasHospitals = resolvedHospitals.length > 0;
+  const displayHospitals = resolvedHospitals.map((hospital) => withResolvedHospitalLogo(hospital));
+  const hasHospitals = displayHospitals.length > 0;
   const persona = isAdmin ? "admin" : isAuthenticated ? "user" : "guest";
   const resolvedAdminSummary = isAdmin ? adminSummary ?? ADMIN_SUMMARY_FALLBACK : null;
   const resolvedUserSummary = persona === "user" ? userSummary ?? USER_SUMMARY_FALLBACK : null;
@@ -833,13 +835,17 @@ export default async function HomePage() {
         </div>
         {hasHospitals ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {resolvedHospitals.map((hospital) => (
-              <article key={hospital.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-200">
-                  {(hospital.logoUrl && (
+            {displayHospitals.map((hospital) => (
+              <article key={hospital.id} className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-50 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                  {hospital.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={hospital.logoUrl} alt={hospital.name} className="h-12 w-12 rounded-full object-cover" />
-                  )) || hospital.name.slice(0, 2)}
+                    <img src={hospital.logoUrl} alt={hospital.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-600 dark:text-slate-200">
+                      {hospital.name.slice(0, 2)}
+                    </span>
+                  )}
                 </div>
                 <div className="flex-1">
                   <h3 className="font-medium text-slate-900 dark:text-white">{hospital.name}</h3>

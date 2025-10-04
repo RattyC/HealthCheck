@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
+import { getPaymentGuide, listPaymentOptions, type PaymentMethod } from "@/lib/payments";
 
 type CheckoutFormProps = {
   defaultFullName: string;
@@ -11,22 +12,18 @@ type CheckoutFormProps = {
   defaultPhone?: string | null;
 };
 
-const paymentOptions = [
-  { value: "promptpay", label: "PromptPay" },
-  { value: "bank_transfer", label: "โอนผ่านธนาคาร" },
-  { value: "credit_card", label: "บัตรเครดิต" },
-  { value: "cash", label: "ชำระเงินสดหน้าร้าน" },
-];
-
 export default function CheckoutForm({ defaultFullName, defaultEmail, defaultPhone }: CheckoutFormProps) {
   const router = useRouter();
   const { push } = useToast();
+  const paymentOptions = listPaymentOptions();
+  const defaultMethod = paymentOptions[0]?.value ?? "promptpay";
   const [fullName, setFullName] = useState(defaultFullName);
   const [email, setEmail] = useState(defaultEmail);
   const [phone, setPhone] = useState(defaultPhone ?? "");
   const [notes, setNotes] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<string>(paymentOptions[0].value);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(defaultMethod);
   const [submitting, setSubmitting] = useState(false);
+  const selectedGuide = getPaymentGuide(paymentMethod);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,7 +95,7 @@ export default function CheckoutForm({ defaultFullName, defaultEmail, defaultPho
           <span className="font-medium text-slate-700 dark:text-slate-200">ช่องทางชำระเงิน</span>
           <select
             value={paymentMethod}
-            onChange={(event) => setPaymentMethod(event.target.value)}
+            onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
           >
             {paymentOptions.map((option) => (
@@ -108,6 +105,20 @@ export default function CheckoutForm({ defaultFullName, defaultEmail, defaultPho
             ))}
           </select>
         </label>
+      </div>
+      <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+        <div className="flex flex-col gap-1">
+          <div className="font-semibold text-slate-800 dark:text-slate-200">{selectedGuide.label}</div>
+          <div>{selectedGuide.summary}</div>
+          {selectedGuide.highlight ? (
+            <div className="text-xs text-emerald-600 dark:text-emerald-300">{selectedGuide.highlight}</div>
+          ) : null}
+        </div>
+        <ul className="mt-3 space-y-1 text-xs text-slate-500 dark:text-slate-400">
+          {selectedGuide.steps.map((step) => (
+            <li key={step}>• {step}</li>
+          ))}
+        </ul>
       </div>
       <label className="block space-y-1 text-sm">
         <span className="font-medium text-slate-700 dark:text-slate-200">รายละเอียดเพิ่มเติม (ถ้ามี)</span>

@@ -390,3 +390,9 @@ export function getTopFallbackPackages(limit = 6) {
     })
     .slice(0, limit);
 }
+
+export function getNewestFallbackPackages(limit = 4) {
+  return FALLBACK_PACKAGES.slice()
+    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+    .slice(0, limit);
+}
