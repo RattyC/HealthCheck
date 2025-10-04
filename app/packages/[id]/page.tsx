@@ -6,7 +6,6 @@ import { logger } from "@/lib/logger";
 import { getSession } from "@/lib/session";
 import BookmarkButton from "@/components/BookmarkButton";
 import PriceHistoryChart from "@/components/PriceHistoryChart";
-import AddToCartButton from "@/components/AddToCartButton";
 import PackageBookingPanel from "@/components/PackageBookingPanel";
 import { getFallbackPromotions } from "@/lib/fallback-data";
 import type { FallbackPromotion } from "@/lib/fallback-data";
