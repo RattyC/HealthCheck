@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
 import RemoveCartItemButton from "@/components/RemoveCartItemButton";
+import { resolveHospitalLogo } from "@/lib/hospital-logos";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ type CartWithItems = Prisma.CartGetPayload<{
             title: true;
             slug: true;
             basePrice: true;
-            hospital: { select: { name: true } };
+            hospital: { select: { id: true; name: true; logoUrl: true } };
           };
         };
       };
@@ -98,22 +99,41 @@ export default async function CartPage() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
           <div className="space-y-4">
-            {list.map((item) => (
-              <article
-                key={item.id}
-                className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70"
-              >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="space-y-1">
-                    <Link
-                      href={`/packages/${item.package.slug ?? item.package.id}`}
-                      className="text-base font-semibold text-slate-900 hover:text-brand dark:text-white dark:hover:text-brand/80"
-                    >
-                      {item.package.title}
-                    </Link>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {item.package.hospital?.name ?? "ไม่ระบุโรงพยาบาล"}
-                    </div>
+            {list.map((item) => {
+              const hospital = item.package.hospital;
+              const hospitalLogo = resolveHospitalLogo({
+                id: hospital?.id ?? null,
+                name: hospital?.name ?? null,
+                logoUrl: hospital?.logoUrl ?? null,
+              });
+              return (
+                <article
+                  key={item.id}
+                  className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-3">
+                        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-50 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                          {hospitalLogo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={hospitalLogo} alt={hospital?.name ?? "โลโก้โรงพยาบาล"} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-500 dark:text-slate-300">
+                              {(hospital?.name ?? "รพ").slice(0, 2)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          <Link
+                            href={`/packages/${item.package.slug ?? item.package.id}`}
+                            className="text-base font-semibold text-slate-900 hover:text-brand dark:text-white dark:hover:text-brand/80"
+                          >
+                            {item.package.title}
+                          </Link>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{hospital?.name ?? "ไม่ระบุโรงพยาบาล"}</div>
+                        </div>
+                      </div>
                     {item.promotionLabel ? (
                       <div className="text-xs text-brand">
                         ใช้โปรโมชั่น: {item.promotionLabel}
@@ -133,18 +153,19 @@ export default async function CartPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right text-sm text-slate-600 dark:text-slate-300">
-                      <div>จำนวน: {item.quantity}</div>
-                      <div className="font-semibold text-slate-900 dark:text-white">
-                        {currency.format(item.package.basePrice * item.quantity)}
+                    <div className="flex items-center gap-3">
+                      <div className="text-right text-sm text-slate-600 dark:text-slate-300">
+                        <div>จำนวน: {item.quantity}</div>
+                        <div className="font-semibold text-slate-900 dark:text-white">
+                          {currency.format(item.package.basePrice * item.quantity)}
+                        </div>
                       </div>
+                      <RemoveCartItemButton packageId={item.package.id} />
                     </div>
-                    <RemoveCartItemButton packageId={item.package.id} />
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
           <aside className="h-fit rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">สรุปตะกร้า</h2>

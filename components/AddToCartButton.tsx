@@ -67,8 +67,14 @@ export default function AddToCartButton({
         throw new Error(payload.error ?? "ไม่สามารถเพิ่มลงตะกร้าได้");
       }
       setInCart(true);
-      push({ title: "เพิ่มลงตะกร้าแล้ว", variant: "success" });
+      push({
+        title: "เพิ่มแพ็กเกจลงตะกร้าแล้ว",
+        description: "ตะกร้าถูกอัปเดต เริ่มขั้นตอนชำระเงินได้ทุกเมื่อ",
+        variant: "success",
+      });
       router.refresh();
+      router.prefetch("/cart");
+      router.prefetch("/checkout");
     } catch (error) {
       const message = error instanceof Error ? error.message : "ไม่สามารถเพิ่มลงตะกร้าได้";
       push({ title: message, variant: "error" });

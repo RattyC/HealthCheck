@@ -14,6 +14,7 @@ import {
   Package,
   Building2,
   Info,
+  Quote,
 } from "lucide-react";
 import { getTopFallbackPackages, getFallbackHospitalSummaries } from "@/lib/fallback-data";
 import { withResolvedHospitalLogo } from "@/lib/hospital-logos";
@@ -84,6 +85,54 @@ const featureHighlights = [
     title: "ซื้อประกันได้ในที่เดียว",
     description: "เลือกแพ็กเกจพร้อมประกันสุขภาพหรืออุบัติเหตุจากพันธมิตรของเรา",
     icon: <Shield className="h-5 w-5" aria-hidden />,
+  },
+];
+
+const heroHighlights = [
+  {
+    title: "ข้อมูลตรวจสุขภาพล่าสุด",
+    description: "อัปเดตราคาและเงื่อนไขใหม่ทุกสัปดาห์จากโรงพยาบาลพันธมิตร",
+    icon: <Sparkles className="h-5 w-5 text-brand" aria-hidden />,
+  },
+  {
+    title: "เปรียบเทียบครบในจอเดียว",
+    description: "เห็นรายการตรวจ โปรโมชั่น และประกันเสริมเพื่อเลือกแผนที่ตรงใจ",
+    icon: <ClipboardList className="h-5 w-5 text-indigo-500" aria-hidden />,
+  },
+  {
+    title: "ทีมผู้เชี่ยวชาญดูแล",
+    description: "ให้คำปรึกษาและยืนยันสิทธิ์กับโรงพยาบาลให้จนจบขั้นตอน",
+    icon: <Shield className="h-5 w-5 text-emerald-500" aria-hidden />,
+  },
+];
+
+const heroStats = [
+  { label: "แพ็กเกจคัดสรร", value: "120+" },
+  { label: "โรงพยาบาลพันธมิตร", value: "20 แห่ง" },
+  { label: "ผู้ใช้พึงพอใจ", value: "4.9/5" },
+];
+
+const testimonials = [
+  {
+    id: "khun-aom",
+    name: "คุณออม สุรีย์พร",
+    role: "HR บริษัทท่องเที่ยว",
+    quote: "ระบบเปรียบเทียบช่วยประหยัดเวลามาก เลือกแพ็กเกจให้พนักงาน 40 คนได้ภายในวันเดียวพร้อมเอกสารครบถ้วน",
+    rating: 5,
+  },
+  {
+    id: "khun-natee",
+    name: "คุณนที วงศ์คำ",
+    role: "นักออกแบบอิสระ",
+    quote: "ประทับใจที่มีเจ้าหน้าที่ช่วยประสานโรงพยาบาลและแจ้งโปรโมชั่นให้ทันที ไม่ต้องโทรถามหลายที่เหมือนก่อน",
+    rating: 5,
+  },
+  {
+    id: "khun-ploy",
+    name: "คุณพลอยไพลิน",
+    role: "คุณแม่ลูกสอง",
+    quote: "แพ็กเกจครอบครัวคุ้มมากค่ะ ได้ตรวจครบทุกคนในครั้งเดียว พร้อมส่วนลดและข้อมูลเตรียมตัวละเอียด",
+    rating: 5,
   },
 ];
 
@@ -404,22 +453,82 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto max-w-6xl space-y-16 px-4 pb-16 pt-12">
-      <section className="text-center">
-        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-1 text-xs font-medium text-slate-500 dark:border-slate-700 dark:text-slate-300">
-          <HeartPulse className="h-3.5 w-3.5" aria-hidden />
-          <span>ตรวจสุขภาพ + ประกันครบในที่เดียว</span>
-        </div>
-        <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
-          เปรียบเทียบแพ็กเกจตรวจสุขภาพในเชียงใหม่ได้ง่าย ๆ
-        </h1>
-        <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
-          ค้นหาราคา รายการตรวจ และโปรโมชันล่าสุด พร้อมเลือกประกันสุขภาพ/อุบัติเหตุที่เหมาะกับคุณ
-        </p>
-        <div className="mt-8">
-          <HeroSearch />
-        </div>
-        <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-          หรือ <Link href="/packages" className="font-medium text-brand hover:underline">ดูแพ็กเกจทั้งหมด</Link> / <Link href="/insurance" className="font-medium text-brand hover:underline">เปรียบเทียบประกันสุขภาพ</Link>
+      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900/80 sm:p-12">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-sky-50 via-white to-violet-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950" aria-hidden />
+        <div className="absolute right-[-4rem] top-[-4rem] -z-10 h-56 w-56 rounded-full bg-brand/20 blur-3xl dark:bg-brand/10" aria-hidden />
+        <div className="absolute bottom-[-5rem] left-[-3rem] -z-10 h-60 w-60 rounded-full bg-indigo-200/40 blur-3xl dark:bg-indigo-500/10" aria-hidden />
+        <div className="relative grid gap-10 lg:grid-cols-[1.1fr,0.9fr] lg:items-start">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1 text-xs font-medium text-slate-500 shadow-sm backdrop-blur dark:bg-slate-900/70 dark:text-slate-300">
+              <HeartPulse className="h-3.5 w-3.5 text-brand" aria-hidden />
+              <span>ตรวจสุขภาพ + ประกันครบในที่เดียว</span>
+            </div>
+            <h1 className="text-4xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
+              วางแผนตรวจสุขภาพให้คนที่คุณรักภายในไม่กี่คลิก
+            </h1>
+            <p className="text-base text-slate-600 dark:text-slate-300 sm:text-lg">
+              คัดสรรแพ็กเกจจากโรงพยาบาลในเชียงใหม่พร้อมโปรโมชันล่าสุด เปรียบเทียบราคา รายการตรวจ และสิทธิ์ประกันได้ครบในหน้าเดียว
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/packages"
+                className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-brand-dark"
+              >
+                เริ่มสำรวจแพ็กเกจ
+              </Link>
+              <Link
+                href="/insurance"
+                className="inline-flex items-center justify-center rounded-full border border-brand px-5 py-2 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white"
+              >
+                พูดคุยกับเจ้าหน้าที่
+              </Link>
+            </div>
+            <div className="mt-6">
+              <HeroSearch />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {heroStats.map((stat) => (
+                <div
+                  key={stat.label}
+                  className="rounded-2xl border border-slate-200/80 bg-white/80 p-4 text-left shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70"
+                >
+                  <div className="text-2xl font-semibold text-slate-900 dark:text-white">{stat.value}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-4 rounded-3xl border border-white/60 bg-white/80 p-6 shadow-lg backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/80">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">สิ่งที่คุณจะได้รับ</span>
+              <span className="rounded-full bg-brand/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand dark:bg-brand/20 dark:text-brand">
+                ครบวงจร
+              </span>
+            </div>
+            <div className="space-y-3">
+              {heroHighlights.map((item) => (
+                <div
+                  key={item.title}
+                  className="flex items-start gap-3 rounded-2xl border border-slate-200/60 bg-white/80 p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-900/70"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">{item.icon}</span>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{item.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-4 text-xs text-slate-600 shadow-inner dark:border-slate-700/70 dark:bg-slate-800/60 dark:text-slate-300">
+              <p className="font-semibold text-slate-700 dark:text-slate-200">ใหม่: เปรียบเทียบแพ็กเกจที่อัปเดตล่าสุด</p>
+              <p className="mt-1">
+                เลือกมากถึง 4 แพ็กเกจแล้วแชร์ลิงก์ให้ครอบครัวหรือทีมงานช่วยตัดสินใจได้ทันที
+              </p>
+              <Link href="/compare/new" className="mt-2 inline-flex items-center gap-1 font-semibold text-brand hover:underline">
+                ทดลองฟีเจอร์เปรียบเทียบล่าสุด
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -680,6 +789,47 @@ export default async function HomePage() {
             </div>
           </div>
         )}
+      </section>
+
+      <section aria-labelledby="customer-reviews" className="space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-1">
+            <h2 id="customer-reviews" className="text-lg font-semibold text-slate-900 dark:text-white">
+              เสียงจากผู้ใช้จริงในเชียงใหม่
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              ผู้ใช้งานจริงทั้งครอบครัว องค์กร และคนทำงานอิสระ ที่เลือก HealthCheck CM Price เพื่อวางแผนตรวจสุขภาพ
+            </p>
+          </div>
+          <Link
+            href="/insurance"
+            className="inline-flex items-center justify-center rounded-full border border-brand px-4 py-2 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white"
+          >
+            ขอเจ้าหน้าที่ช่วยจัดแพ็กเกจ
+          </Link>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {testimonials.map((testimonial) => (
+            <article
+              key={testimonial.id}
+              className="flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/80"
+            >
+              <Quote className="h-8 w-8 text-brand" aria-hidden />
+              <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">“{testimonial.quote}”</p>
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">{testimonial.name}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{testimonial.role}</div>
+                </div>
+                <div className="flex items-center gap-1 text-amber-500">
+                  {Array.from({ length: testimonial.rating }).map((_, index) => (
+                    <Star key={index} className="h-4 w-4" fill="currentColor" aria-hidden />
+                  ))}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
 
       {shouldShowConsumerSections && (

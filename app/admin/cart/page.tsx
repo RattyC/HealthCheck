@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-guard";
+import { resolveHospitalLogo } from "@/lib/hospital-logos";
 
 export const revalidate = 0;
 
@@ -36,7 +37,7 @@ export default async function AdminCartPage() {
             title: string;
             slug: string;
             basePrice: number;
-            hospital: { name: string | null } | null;
+            hospital: { id: string; name: string | null; logoUrl: string | null } | null;
           };
         }>;
       }>
@@ -54,7 +55,7 @@ export default async function AdminCartPage() {
                 id: true,
                 title: true,
                 basePrice: true,
-                hospital: { select: { name: true } },
+                hospital: { select: { id: true, name: true, logoUrl: true } },
                 slug: true,
               },
             },
@@ -86,6 +87,11 @@ export default async function AdminCartPage() {
         packageTitle: item.package.title,
         packageSlug: item.package.slug,
         hospitalName: item.package.hospital?.name ?? "ไม่ระบุโรงพยาบาล",
+        hospitalLogo: resolveHospitalLogo({
+          id: item.package.hospital?.id ?? null,
+          name: item.package.hospital?.name ?? null,
+          logoUrl: item.package.hospital?.logoUrl ?? null,
+        }),
         quantity: item.quantity,
         amount: item.quantity * item.package.basePrice,
         addedAt: item.addedAt,
@@ -166,7 +172,21 @@ export default async function AdminCartPage() {
                         {entry.packageTitle}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{entry.hospitalName}</td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      <div className="flex items-center gap-2">
+                        <span className="relative h-8 w-8 overflow-hidden rounded-full border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+                          {entry.hospitalLogo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={entry.hospitalLogo} alt={entry.hospitalName} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center text-[11px] font-semibold text-slate-500 dark:text-slate-300">
+                              {entry.hospitalName.slice(0, 2)}
+                            </span>
+                          )}
+                        </span>
+                        <span>{entry.hospitalName}</span>
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-right">{entry.quantity}</td>
                     <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-white">{formatCurrency(entry.amount)}</td>
                     <td className="px-4 py-3 text-right text-xs text-slate-500">{formatDate(entry.addedAt)}</td>
