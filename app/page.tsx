@@ -371,6 +371,7 @@ export default async function HomePage() {
     title: string;
     basePrice: number;
     updatedAt: Date;
+    priceNote: string | null;
     hospital: { name: string; logoUrl: string | null } | null;
     metrics: { viewCount?: number | null } | null;
   };
@@ -390,6 +391,7 @@ export default async function HomePage() {
         title: pkg.title,
         basePrice: pkg.basePrice,
         updatedAt: pkg.updatedAt,
+        priceNote: pkg.priceNote ?? null,
         hospital: pkg.hospital ? { name: pkg.hospital.name, logoUrl: pkg.hospital.logoUrl ?? null } : null,
         metrics: pkg.metrics ? { viewCount: pkg.metrics.viewCount } : null,
       }))
@@ -417,6 +419,7 @@ export default async function HomePage() {
       title: pkg.title,
       basePrice: pkg.basePrice,
       updatedAt: pkg.updatedAt,
+      priceNote: pkg.priceNote ?? null,
       hospital: { name: pkg.hospitalName, logoUrl: pkg.hospitalLogoUrl },
       metrics: { viewCount: pkg.metrics.viewCount },
     }));
@@ -434,12 +437,20 @@ export default async function HomePage() {
     fallbackHospitalsUsed = resolvedHospitals.length > 0;
   }
 
+  const engagementScore = (pkg: { metrics: { [key: string]: unknown } | null }) => {
+    const metrics = pkg.metrics as { compareCount?: number | null; bookmarkCount?: number | null } | null;
+    if (!metrics) return 0;
+    const compare = Number(metrics.compareCount ?? 0);
+    const bookmark = Number(metrics.bookmarkCount ?? 0);
+    return compare + bookmark;
+  };
+
   const hasPackages = resolvedTopPackages.length > 0;
   const hotDeals = resolvedTopPackages
     .slice()
     .sort((a, b) => {
-      const dealsA = (a.metrics?.compareCount ?? 0) + (a.metrics?.bookmarkCount ?? 0);
-      const dealsB = (b.metrics?.compareCount ?? 0) + (b.metrics?.bookmarkCount ?? 0);
+      const dealsA = engagementScore(a);
+      const dealsB = engagementScore(b);
       if (dealsB === dealsA) {
         return (b.metrics?.viewCount ?? 0) - (a.metrics?.viewCount ?? 0);
       }
@@ -875,11 +886,15 @@ export default async function HomePage() {
                   </Link>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {hotDeals.map((deal) => (
-                    <article
-                      key={deal.id}
-                      className="relative overflow-hidden rounded-2xl border border-amber-200 bg-white/90 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-amber-500/40 dark:bg-slate-900/80"
-                    >
+                  {hotDeals.map((deal) => {
+                    const bookmarkCount = Number(
+                      (deal.metrics as { bookmarkCount?: number | null } | null)?.bookmarkCount ?? 0
+                    );
+                    return (
+                      <article
+                        key={deal.id}
+                        className="relative overflow-hidden rounded-2xl border border-amber-200 bg-white/90 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-amber-500/40 dark:bg-slate-900/80"
+                      >
                       <div className="absolute right-4 top-4 rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
                         Hot
                       </div>
@@ -901,7 +916,7 @@ export default async function HomePage() {
                         ) : null}
                         <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                           <span>ยอดบันทึก</span>
-                          <span>{deal.metrics?.bookmarkCount ?? 0} ราย</span>
+                          <span>{bookmarkCount} ราย</span>
                         </div>
                       </div>
                       <div className="mt-5 flex items-center gap-2 text-sm">
@@ -918,8 +933,9 @@ export default async function HomePage() {
                           เปรียบเทียบ
                         </Link>
                       </div>
-                    </article>
-                  ))}
+                      </article>
+                    );
+                  })}
                 </div>
               </div>
             </section>

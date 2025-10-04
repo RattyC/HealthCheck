@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       await tx.auditTrail.createMany({
         data: packageIds.map((id) => ({
           actorId: user.id!,
-          action: action === "approve" ? "BULK_APPROVE_PACKAGE" : "BULK_ARCHIVE_PACKAGE",
+          action: action === "approve" ? "APPROVE_PACKAGE" : "ARCHIVE_PACKAGE",
           entityId: id,
           entityType: "healthPackage",
           diff: { status: nextStatus },
